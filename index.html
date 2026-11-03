@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Posventa · Kyoto Nissan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;700&display=swap">
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <header class="encabezado">
+    <div class="encabezado__marca">
+      <span class="encabezado__kyoto">KYOTO AUTOMOTORES</span>
+      <span class="encabezado__sub">Concesionario Oficial Nissan</span>
+    </div>
+  </header>
+
+  <nav class="solapas" aria-label="Áreas">
+    <button type="button" class="solapa solapa--activa" aria-current="page">POSVENTA</button>
+  </nav>
+
+  <nav class="subsolapas" aria-label="Checks de posventa">
+    <button type="button" class="subsolapa" data-tipo="checkin">CHECK IN</button>
+    <button type="button" class="subsolapa" data-tipo="checkout">CHECK OUT</button>
+    <button type="button" class="subsolapa" data-tipo="agendamiento">AGENDAMIENTO</button>
+  </nav>
+
+  <div id="avisos" aria-live="polite"></div>
+
+  <main id="app"></main>
+
+  <footer class="barra-guardar">
+    <span id="progreso" class="barra-guardar__progreso"></span>
+    <button type="button" id="guardar" class="barra-guardar__boton">GUARDAR</button>
+  </footer>
+
+  <div class="confirmacion" hidden>
+    <div class="confirmacion__caja" role="dialog" aria-modal="true" aria-labelledby="confirmacion-titulo">
+      <div class="confirmacion__icono" aria-hidden="true">✓</div>
+      <h2 id="confirmacion-titulo" class="confirmacion__titulo"></h2>
+      <p class="confirmacion__texto"></p>
+      <button type="button" id="cargar-otro" class="confirmacion__boton">Cargar otro</button>
+    </div>
+  </div>
+
+  <script src="js/catalogo.js"></script>
+  <script src="js/logica.js"></script>
+  <script src="js/vista.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
