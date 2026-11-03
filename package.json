@@ -1,0 +1,12 @@
+{
+  "name": "kyoto-posventa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Checks de Posventa (Check In, Check Out, Agendamiento) para Kyoto Automotores",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\"",
+    "iconos": "python tools/extraer_iconos.py",
+    "servir": "python -m http.server 8765"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm test)",
+      "Bash(npm run iconos)",
+      "Bash(node --test:*)",
+      "Bash(node --check:*)",
+      "Bash(python tools/extraer_iconos.py)",
+      "Bash(python -m http.server:*)",
+      "Bash(python -:*)",
+      "Bash(curl -s:*)",
+      "Bash(ls img:*)",
+      "Bash(ls tests:*)",
+      "Bash(test:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git tag:*)",
+      "Bash(git ls-files:*)"
+    ],
+    "deny": [
+      "Bash(git push:*)",
+      "Bash(git push --force:*)",
+      "Bash(rm -rf:*)"
+    ]
+  }
+}
