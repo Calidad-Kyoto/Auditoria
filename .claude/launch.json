@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "posventa-local",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["tools/servidor-local.js", "8767"],
+      "port": 8767
+    }
+  ]
+}
