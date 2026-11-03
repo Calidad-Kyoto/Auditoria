@@ -201,11 +201,120 @@
   $avisos.addEventListener('click', function (ev) {
     var accion = ev.target.getAttribute && ev.target.getAttribute('data-accion');
     if (accion === 'reintentar-config') { aviso('config', null); estado.sucursales = null; dibujar(); cargarConfig(); }
+    if (accion === 'reintentar-pendientes') enviarCola();
   });
+
+  // ───────── Guardar, cola sin conexión y confirmación ─────────
+
+  var sinEndpoint = !ENDPOINT || ENDPOINT === MARCADOR;
+  var cola = Logica.crearCola({
+    getItem: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    setItem: function (k, v) { try { localStorage.setItem(k, v); } catch (e) { /* sin almacenamiento */ } }
+  });
+  var cadena = Promise.resolve();
+
+  function enviar(p) {
+    return fetch(ENDPOINT, { method: 'POST', body: JSON.stringify(p) }).then(function (r) { return r.json(); });
+  }
+
+  // Los envíos van de a uno (encadenados) para no mandar dos veces el mismo check a la vez.
+  function enviarCola() {
+    if (sinEndpoint) return Promise.resolve(null);
+    cadena = cadena.then(function () {
+      return Logica.enviarPendientes(cola, enviar);
+    }).then(function (res) {
+      if (res.rechazados.length) {
+        aviso('rechazo', htmlAviso('error', 'El Sheet rechazó un check: ' + Vista.esc(res.rechazados[0].error) + '. Revisá los datos y volvé a guardar.'));
+      }
+      mostrarPendientes();
+      return res;
+    }, function (err) {
+      console.warn('Posventa: falló el envío', err);
+      mostrarPendientes();
+      return null;
+    });
+    return cadena;
+  }
+
+  function mostrarPendientes() {
+    var n = cola.tamano();
+    aviso('pendientes', n ? htmlAviso('info', n + (n === 1 ? ' check pendiente' : ' checks pendientes') + ' de envío (sin conexión).', 'reintentar-pendientes', 'Reintentar') : null);
+  }
+
+  function marcarErrores(tipo, datos) {
+    var primero = null;
+    Logica.REQUERIDOS[tipo].forEach(function (k) {
+      var vacio = !String(datos[k] || '').trim();
+      var malo = vacio || (k === 'patente' && !Logica.patenteValida(datos[k]));
+      var campo = $app.querySelector('[name="' + k + '"]');
+      if (!campo) return;
+      campo.closest('.campo').classList.toggle('campo--error', malo);
+      if (malo && !primero) primero = campo;
+    });
+    if (primero) primero.focus();
+  }
+
+  var $confirmacion = document.querySelector('.confirmacion');
+  function mostrarConfirmacion(pendiente, hoja, pct) {
+    $confirmacion.classList.toggle('confirmacion--pendiente', pendiente);
+    $confirmacion.querySelector('.confirmacion__icono').textContent = pendiente ? '!' : '✓';
+    $confirmacion.querySelector('.confirmacion__titulo').textContent = pendiente ? 'Guardado en esta tablet' : 'Guardado ✓';
+    $confirmacion.querySelector('.confirmacion__texto').textContent = pendiente
+      ? 'Se enviará solo cuando vuelva la conexión.'
+      : 'En la hoja ' + hoja + ' · ' + pct + ' % de cumplimiento.';
+    $confirmacion.hidden = false;
+    document.getElementById('cargar-otro').focus();
+  }
+
+  $guardar.addEventListener('click', function () {
+    var tipo = estado.tipo;
+    var e = estado.porTipo[tipo];
+    aviso('rechazo', null);
+    var errores = Logica.validarDatos(tipo, e.datos);
+    if (errores.length) {
+      aviso('validacion', htmlAviso('error', 'Faltan datos para guardar:<ul>' + errores.map(function (x) { return '<li>' + Vista.esc(x) + '</li>'; }).join('') + '</ul>'));
+      marcarErrores(tipo, e.datos);
+      return;
+    }
+    aviso('validacion', null);
+    var payload = Logica.construirPayload(tipo, e.datos, e.marcados, CATALOGO, Logica.nuevoId(), new Date());
+    cola.agregar(payload);
+    escribirLS('posventa_ultimo', { sucursal: e.datos.sucursal, asesor: e.datos.asesor });
+    $guardar.disabled = true;
+    $guardar.textContent = 'GUARDANDO…';
+    enviarCola().then(function (res) {
+      $guardar.disabled = false;
+      $guardar.textContent = TEXTO_BOTON[estado.tipo];
+      var rechazado = res && res.rechazados.some(function (r) { return r.idEnvio === payload.idEnvio; });
+      if (rechazado) return; // el aviso de rechazo ya está a la vista y el formulario queda como estaba
+      var pendiente = cola.listar().some(function (p) { return p.idEnvio === payload.idEnvio; });
+      mostrarConfirmacion(pendiente, CATALOGO[tipo].hoja, Logica.porcentaje(payload.items));
+    });
+  });
+
+  // Cargar otro: limpia el check actual y conserva sucursal y asesor.
+  document.getElementById('cargar-otro').addEventListener('click', function () {
+    var e = estado.porTipo[estado.tipo];
+    e.marcados = {};
+    ['or', 'patente', 'cliente', 'fechaTurno'].forEach(function (k) { delete e.datos[k]; });
+    escribirLS('posventa_ultimo', { sucursal: e.datos.sucursal, asesor: e.datos.asesor });
+    $confirmacion.hidden = true;
+    dibujar();
+    window.scrollTo(0, 0);
+  });
+
+  if (sinEndpoint) {
+    aviso('endpoint', htmlAviso('error', 'Falta configurar la URL del Apps Script (js/config.js).'));
+  }
+  window.addEventListener('online', enviarCola);
+  setInterval(enviarCola, 60000);
 
   // ───────── Inicio ─────────
 
   estado.tipo = tipoDesdeHash();
   dibujar();
+  if (sinEndpoint) $guardar.disabled = true;
   cargarConfig();
+  mostrarPendientes();
+  enviarCola();
 })();
