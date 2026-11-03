@@ -1,7 +1,7 @@
 # Puesta en marcha — Kyoto Posventa
 
 Se hace una sola vez y lleva unos 20 minutos. Necesitás la cuenta de Google de Calidad y la cuenta
-de GitHub `tchequim`.
+de GitHub **Calidad-Kyoto**.
 
 ## 1. Crear el Sheet
 
@@ -44,15 +44,15 @@ de GitHub `tchequim`.
 
 ## 5. Publicar en GitHub Pages
 
-1. En GitHub creá el repositorio **tchequim/kyoto-posventa** (vacío).
+1. En GitHub creá el repositorio **Calidad-Kyoto/kyoto-posventa** (vacío, público).
 2. En Git Bash, desde `kyoto-posventa`:
    ```bash
    git add -A && git commit -m "config: url del apps script"
-   git remote add origin https://github.com/tchequim/kyoto-posventa.git
+   git remote add origin https://github.com/Calidad-Kyoto/kyoto-posventa.git
    git push -u origin main
    ```
 3. En GitHub: **Settings → Pages → Branch: main / (root) → Save**.
-4. En 1 o 2 minutos la página queda en `https://tchequim.github.io/kyoto-posventa/`.
+4. En 1 o 2 minutos la página queda en `https://calidad-kyoto.github.io/kyoto-posventa/`.
 5. Abrila en cada tablet y guardala como acceso directo (menú del navegador → Agregar a pantalla de inicio).
 
 ## 6. Cargar asesores
