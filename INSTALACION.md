@@ -44,15 +44,15 @@ de GitHub **Calidad-Kyoto**.
 
 ## 5. Publicar en GitHub Pages
 
-1. En GitHub creá el repositorio **Calidad-Kyoto/kyoto-posventa** (vacío, público).
+1. En GitHub creá el repositorio **Calidad-Kyoto/Auditoria** (público; ya creado).
 2. En Git Bash, desde `kyoto-posventa`:
    ```bash
    git add -A && git commit -m "config: url del apps script"
-   git remote add origin https://github.com/Calidad-Kyoto/kyoto-posventa.git
+   git remote add origin https://github.com/Calidad-Kyoto/Auditoria.git
    git push -u origin main
    ```
 3. En GitHub: **Settings → Pages → Branch: main / (root) → Save**.
-4. En 1 o 2 minutos la página queda en `https://calidad-kyoto.github.io/kyoto-posventa/`.
+4. En 1 o 2 minutos la página queda en `https://calidad-kyoto.github.io/Auditoria/`.
 5. Abrila en cada tablet y guardala como acceso directo (menú del navegador → Agregar a pantalla de inicio).
 
 ## 6. Cargar asesores
