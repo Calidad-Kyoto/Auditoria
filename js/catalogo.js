@@ -10,6 +10,9 @@
   function it(id, lineas, etiqueta) {
     return { id: id, lineas: lineas, etiqueta: etiqueta || lineas.join(' '), img: 'img/' + id + '.png' };
   }
+  function pregunta(id, texto) {
+    return { id: id, lineas: [texto], etiqueta: texto, img: null, opciones: ['SI', 'NO', 'NO CORRESPONDE'] };
+  }
   function proto(id, etiqueta, texto) {
     return { id: id, lineas: [], etiqueta: etiqueta, img: null, texto: texto };
   }
@@ -126,6 +129,23 @@
             proto('ag_recordar_turno', 'Recordó día y hora del turno', '- Recordar al cliente el día y hora del turno antes de terminar el llamado.'),
             proto('ag_puntualidad', 'Reforzó la puntualidad', '- Reforzar la importancia de la puntualidad.'),
             proto('ag_despedida', 'Saludó y despidió por nombre', '- Saludar cordialmente por nombre y despedir al cliente.')
+          ]
+        }
+      ]
+    },
+
+    // General: preguntas SI / NO / NO CORRESPONDE y observaciones libres (sin PDF de origen).
+    general: {
+      titulo: 'GENERAL',
+      hoja: 'General',
+      observaciones: true,
+      secciones: [
+        {
+          id: 'general', tipo: 'preguntas', items: [
+            pregunta('ge_no_show', 'Control No show'),
+            pregunta('ge_recordatorio_turnos', 'Control de recordatorio de turnos'),
+            pregunta('ge_uso_epp', 'Control de uso de EPP'),
+            pregunta('ge_cobertores_capot', 'Control de uso de cobertores de capot de vehículos')
           ]
         }
       ]

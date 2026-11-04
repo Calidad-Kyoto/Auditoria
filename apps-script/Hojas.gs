@@ -1,13 +1,13 @@
 /**
  * Kyoto Posventa — Hojas.gs: constantes, hojas, Config y GET.
- * Backend de los checks (Check In, Check Out, Agendamiento).
+ * Backend de los checks (Check In, Check Out, Agendamiento, General).
  * Script VINCULADO al Google Sheet (Extensiones → Apps Script). Se publica como aplicación web.
  *
  *   GET  ?accion=config[&callback=fn]  → sucursales y asesores activos de la hoja Config (JSON o JSONP)
  *   POST body JSON {accion:'guardar', ...} → agrega una fila en la hoja del check
  */
 
-var HOJAS = { checkin: 'Check In', checkout: 'Check Out', agendamiento: 'Agendamiento' };
+var HOJAS = { checkin: 'Check In', checkout: 'Check Out', agendamiento: 'Agendamiento', general: 'General' };
 var HOJA_CONFIG = 'Config';
 var HOJA_RESUMEN = 'Resumen';
 var COL_ID = 'ID envío';
@@ -15,17 +15,24 @@ var COL_ID = 'ID envío';
 var FIJAS = {
   checkin: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', '% Cumplimiento', 'Ítems OK', 'Ítems totales', COL_ID],
   checkout: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', '% Cumplimiento', 'Ítems OK', 'Ítems totales', COL_ID],
-  agendamiento: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Cliente', 'Patente', 'Fecha del turno', '% Cumplimiento', 'Ítems OK', 'Ítems totales', COL_ID]
+  agendamiento: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Cliente', 'Patente', 'Fecha del turno', '% Cumplimiento', 'Ítems OK', 'Ítems totales', COL_ID],
+  general: ['Fecha/Hora', 'Sucursal', 'Asesor', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID]
 };
 
 // Encabezado de columna → campo de payload.datos
-var CAMPOS = { 'Sucursal': 'sucursal', 'Asesor': 'asesor', 'Nº OR': 'or', 'Patente': 'patente', 'Cliente': 'cliente', 'Fecha del turno': 'fechaTurno' };
+var CAMPOS = { 'Sucursal': 'sucursal', 'Asesor': 'asesor', 'Nº OR': 'or', 'Patente': 'patente', 'Cliente': 'cliente', 'Fecha del turno': 'fechaTurno', 'Observaciones': 'observaciones' };
 
 var REQUERIDOS = {
   checkin: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
   checkout: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
-  agendamiento: ['sucursal', 'asesor', 'cliente', 'patente', 'fechaTurno']
+  agendamiento: ['sucursal', 'asesor', 'cliente', 'patente', 'fechaTurno'],
+  general: ['sucursal', 'asesor']
 };
+
+// Respuestas posibles de un ítem. Los checks con casillero mandan ok:true/false (= SI/NO);
+// las preguntas de General mandan valor: 'SI' | 'NO' | 'NO CORRESPONDE'.
+var VALORES = ['SI', 'NO', 'NO CORRESPONDE'];
+var MAX_OBSERVACIONES = 2000;
 
 var SUCURSALES_INICIALES = ['KYOTO RESISTENCIA', 'KYOTO CORRIENTES', 'KYOTO POSADAS', 'KYOTO SAENZ PEÑA'];
 

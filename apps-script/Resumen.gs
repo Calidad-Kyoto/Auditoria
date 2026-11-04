@@ -23,9 +23,9 @@ function actualizarResumen() {
       var fecha = f[cF] instanceof Date ? f[cF] : new Date(f[cF]);
       var mes = isNaN(fecha.getTime()) ? 'sin fecha' : Utilities.formatDate(fecha, tz, 'yyyy-MM');
       var clave = [mes, HOJAS[tipo], f[cS], f[cA]].join('|');
-      if (!grupos[clave]) grupos[clave] = { mes: mes, check: HOJAS[tipo], suc: f[cS], ase: f[cA], n: 0, suma: 0 };
+      if (!grupos[clave]) grupos[clave] = { mes: mes, check: HOJAS[tipo], suc: f[cS], ase: f[cA], n: 0, conPct: 0, suma: 0 };
       grupos[clave].n++;
-      grupos[clave].suma += Number(f[cP]) || 0;
+      if (f[cP] !== '' && f[cP] !== null) { grupos[clave].conPct++; grupos[clave].suma += Number(f[cP]) || 0; } // vacío = todo NO CORRESPONDE
       for (var c = inicioItems; c < enc.length; c++) {
         if (f[c] !== 'SI' && f[c] !== 'NO') continue;
         var k = HOJAS[tipo] + '|' + enc[c];
@@ -41,7 +41,7 @@ function actualizarResumen() {
     .sort(function (a, b) {
       return a.mes < b.mes ? 1 : a.mes > b.mes ? -1 : (a.check + a.suc + a.ase).localeCompare(b.check + b.suc + b.ase);
     })
-    .forEach(function (g) { filas.push([g.mes, g.check, g.suc, g.ase, g.n, Math.round(g.suma / g.n)]); });
+    .forEach(function (g) { filas.push([g.mes, g.check, g.suc, g.ase, g.n, g.conPct ? Math.round(g.suma / g.conPct) : '']); });
 
   filas.push(['', '', '', '', '', '']);
   filas.push(['Check', 'Ítem', 'Veces NO', 'Total', '% NO', '']);

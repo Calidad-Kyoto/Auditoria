@@ -22,6 +22,13 @@
       '<span class="protocolo__texto">' + esc(it.texto) + '</span>' +
       (it.nota ? '<span class="protocolo__nota">' + esc(it.nota) + '</span>' : '') + '</label>';
   }
+  function pregunta(it) {
+    return '<fieldset class="pregunta" data-item="' + esc(it.id) + '"><legend class="pregunta__texto">' + it.lineas.map(esc).join('<br>') +
+      '</legend><div class="pregunta__opciones">' + it.opciones.map(function (op) {
+        return '<label class="opcion"><input type="radio" class="respuesta" name="' + esc(it.id) + '" value="' + esc(op) +
+          '" data-item="' + esc(it.id) + '"><span>' + esc(op) + '</span></label>';
+      }).join('') + '</div></fieldset>';
+  }
   function seccion(sec) {
     var celdas = sec.items.map(celda).join('');
     switch (sec.tipo) {
@@ -31,13 +38,17 @@
       case 'grilla-roja': return '<div class="grilla grilla--3 grilla--roja">' + celdas + '</div>';
       case 'protocolo-inicio': return '<div class="protocolo protocolo--inicio">' + sec.items.map(protocolo).join('') + '</div>';
       case 'protocolo-cierre': return '<div class="protocolo protocolo--cierre">' + sec.items.map(protocolo).join('') + '</div>';
+      case 'preguntas': return '<div class="preguntas">' + sec.items.map(pregunta).join('') + '</div>';
       default: throw new Error('tipo de sección desconocido: ' + sec.tipo);
     }
   }
   function htmlCheck(tipo, catalogo) {
     var c = catalogo[tipo];
     return '<section class="check check--' + esc(tipo) + '" data-tipo="' + esc(tipo) + '"><h2 class="pestana">' + esc(c.titulo) + '</h2>' +
-      c.secciones.map(seccion).join('') + '</section>';
+      c.secciones.map(seccion).join('') +
+      (c.observaciones ? '<div class="observaciones"><h3 class="observaciones__titulo">OBSERVACIONES</h3>' +
+        '<textarea name="observaciones" class="observaciones__texto" rows="5" maxlength="2000" placeholder="Cualquier comentario sobre este control"></textarea></div>' : '') +
+      '</section>';
   }
   function campo(nombre, etiqueta, control) {
     return '<label class="campo"><span>' + etiqueta + '</span>' + control + '</label>';
@@ -48,9 +59,11 @@
     }).join('');
     var h = campo('sucursal', 'Sucursal', '<select name="sucursal" required>' + ops + '</select>') +
       campo('asesor', tipo === 'agendamiento' ? 'Quién atendió' : 'Asesor', '<select name="asesor" required><option value="" disabled selected>Elegí primero la sucursal</option></select>');
-    if (tipo !== 'agendamiento') h += campo('or', 'Nº de OR', '<input name="or" inputmode="numeric" autocomplete="off" required>');
-    h += campo('patente', 'Patente', '<input name="patente" autocapitalize="characters" autocomplete="off" required>');
-    h += campo('cliente', 'Cliente', '<input name="cliente" autocomplete="off" required>');
+    if (tipo === 'checkin' || tipo === 'checkout') h += campo('or', 'Nº de OR', '<input name="or" inputmode="numeric" autocomplete="off" required>');
+    if (tipo !== 'general') {
+      h += campo('patente', 'Patente', '<input name="patente" autocapitalize="characters" autocomplete="off" required>');
+      h += campo('cliente', 'Cliente', '<input name="cliente" autocomplete="off" required>');
+    }
     if (tipo === 'agendamiento') h += campo('fechaTurno', 'Fecha del turno', '<input name="fechaTurno" type="date" required>');
     return '<div class="datos" data-tipo="' + esc(tipo) + '">' + h + '</div>';
   }

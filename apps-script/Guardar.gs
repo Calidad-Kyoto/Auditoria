@@ -28,10 +28,19 @@ function validar_(p) {
   if (!Array.isArray(p.items) || !p.items.length) throw new Error('el check no tiene ítems');
   var vistas = {};
   p.items.forEach(function (it) {
-    if (!it || typeof it.etiqueta !== 'string' || !it.etiqueta.trim() || typeof it.ok !== 'boolean') throw new Error('ítem inválido');
+    if (!it || typeof it.etiqueta !== 'string' || !it.etiqueta.trim()) throw new Error('ítem inválido');
+    if (it.valor !== undefined ? VALORES.indexOf(it.valor) < 0 : typeof it.ok !== 'boolean') throw new Error('respuesta inválida: ' + it.etiqueta);
     if (vistas[it.etiqueta]) throw new Error('ítem repetido: ' + it.etiqueta);
     vistas[it.etiqueta] = true;
   });
+  if (d.observaciones !== undefined && String(d.observaciones).length > MAX_OBSERVACIONES) {
+    throw new Error('las observaciones superan los ' + MAX_OBSERVACIONES + ' caracteres');
+  }
+}
+
+// 'SI' | 'NO' | 'NO CORRESPONDE' de un ítem, venga como ok (casillero) o como valor (pregunta).
+function valorDe_(it) {
+  return it.valor !== undefined ? it.valor : (it.ok ? 'SI' : 'NO');
 }
 
 function guardarCheck_(p) {
@@ -57,19 +66,22 @@ function guardarCheck_(p) {
       enc = enc.concat(nuevas);
     }
 
-    var okCount = p.items.filter(function (it) { return it.ok; }).length;
+    // Los ítems "NO CORRESPONDE" no cuentan para el cumplimiento.
+    var valores = p.items.map(valorDe_);
+    var okCount = valores.filter(function (v) { return v === 'SI'; }).length;
+    var aplicables = valores.filter(function (v) { return v !== 'NO CORRESPONDE'; }).length;
     var fecha = new Date(p.creado);
     if (isNaN(fecha.getTime())) fecha = new Date();
     var fila = enc.map(function (h) {
       if (h === 'Fecha/Hora') return fecha;
-      if (h === '% Cumplimiento') return Math.round(okCount * 100 / p.items.length);
+      if (h === '% Cumplimiento') return aplicables ? Math.round(okCount * 100 / aplicables) : '';
       if (h === 'Ítems OK') return okCount;
-      if (h === 'Ítems totales') return p.items.length;
+      if (h === 'Ítems totales') return aplicables;
       if (h === COL_ID) return p.idEnvio;
       if (CAMPOS[h]) return String(p.datos[CAMPOS[h]] || '').trim();
       return '';
     });
-    p.items.forEach(function (it) { fila[enc.indexOf(it.etiqueta)] = it.ok ? 'SI' : 'NO'; });
+    p.items.forEach(function (it, i) { fila[enc.indexOf(it.etiqueta)] = valores[i]; });
     hoja.appendRow(fila);
     return { ok: true, duplicado: false, fila: hoja.getLastRow() };
   } finally {

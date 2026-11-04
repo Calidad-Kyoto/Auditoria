@@ -8,8 +8,10 @@
   var REQUERIDOS = {
     checkin: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
     checkout: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
-    agendamiento: ['sucursal', 'asesor', 'cliente', 'patente', 'fechaTurno']
+    agendamiento: ['sucursal', 'asesor', 'cliente', 'patente', 'fechaTurno'],
+    general: ['sucursal', 'asesor']
   };
+  var MAX_OBSERVACIONES = 2000;
   var NOMBRES = { sucursal: 'Sucursal', asesor: 'Asesor', or: 'Nº de OR', patente: 'Patente', cliente: 'Cliente', fechaTurno: 'Fecha del turno' };
 
   function normalizarPatente(s) {
@@ -39,10 +41,20 @@
     return out;
   }
 
+  // Ítems con casillero traen ok:true/false; las preguntas traen valor 'SI' | 'NO' | 'NO CORRESPONDE'.
+  // Los "NO CORRESPONDE" no cuentan para el cumplimiento.
   function porcentaje(items) {
-    if (!items.length) return 0;
-    var ok = items.filter(function (i) { return i.ok; }).length;
-    return Math.round(ok * 100 / items.length);
+    var aplicables = items.filter(function (i) { return i.valor !== 'NO CORRESPONDE'; });
+    if (!aplicables.length) return 0;
+    var ok = aplicables.filter(function (i) { return i.valor !== undefined ? i.valor === 'SI' : i.ok; }).length;
+    return Math.round(ok * 100 / aplicables.length);
+  }
+
+  // Las preguntas (ítems con opciones) son obligatorias.
+  function validarRespuestas(tipo, marcados, catalogo) {
+    return itemsDe(catalogo, tipo).filter(function (i) {
+      return i.opciones && i.opciones.indexOf(marcados[i.id]) < 0;
+    }).map(function (i) { return 'Falta responder: ' + i.etiqueta; });
   }
 
   function nuevoId() {
@@ -54,7 +66,8 @@
   function construirPayload(tipo, datos, marcados, catalogo, idEnvio, ahora) {
     var d = {};
     REQUERIDOS[tipo].forEach(function (k) { d[k] = String(datos[k] || '').trim(); });
-    d.patente = normalizarPatente(d.patente);
+    if (d.patente !== undefined) d.patente = normalizarPatente(d.patente);
+    if (catalogo[tipo].observaciones) d.observaciones = String(datos.observaciones || '').trim().slice(0, MAX_OBSERVACIONES);
     return {
       accion: 'guardar',
       tipo: tipo,
@@ -62,7 +75,9 @@
       creado: (ahora || new Date()).toISOString(),
       datos: d,
       items: itemsDe(catalogo, tipo).map(function (i) {
-        return { id: i.id, etiqueta: i.etiqueta, ok: !!marcados[i.id] };
+        return i.opciones
+          ? { id: i.id, etiqueta: i.etiqueta, valor: marcados[i.id] }
+          : { id: i.id, etiqueta: i.etiqueta, ok: !!marcados[i.id] };
       })
     };
   }
@@ -110,6 +125,7 @@
     normalizarPatente: normalizarPatente,
     patenteValida: patenteValida,
     validarDatos: validarDatos,
+    validarRespuestas: validarRespuestas,
     itemsDe: itemsDe,
     porcentaje: porcentaje,
     nuevoId: nuevoId,

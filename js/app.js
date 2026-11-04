@@ -9,8 +9,9 @@
   var Vista = window.Vista;
   var ENDPOINT = ((window.POSVENTA_CONFIG || {}).ENDPOINT || '').trim();
   var MARCADOR = 'PEGAR_AQUI_LA_URL_DEL_APPS_SCRIPT';
-  var TIPOS = ['checkin', 'checkout', 'agendamiento'];
-  var TEXTO_BOTON = { checkin: 'GUARDAR CHECK IN', checkout: 'GUARDAR CHECK OUT', agendamiento: 'GUARDAR AGENDAMIENTO' };
+  var TIPOS = ['checkin', 'checkout', 'agendamiento', 'general'];
+  var TEXTO_BOTON = { checkin: 'GUARDAR CHECK IN', checkout: 'GUARDAR CHECK OUT', agendamiento: 'GUARDAR AGENDAMIENTO', general: 'GUARDAR GENERAL' };
+  var CAMPOS_LIBRES = ['or', 'patente', 'cliente', 'fechaTurno', 'observaciones'];
 
   var $app = document.getElementById('app');
   var $avisos = document.getElementById('avisos');
@@ -125,9 +126,16 @@
       var asesores = (sucursales.filter(function (s) { return s.nombre === e.datos.sucursal; })[0] || {}).asesores || [];
       if (asesores.indexOf(e.datos.asesor) >= 0) selAsesor.value = e.datos.asesor; else e.datos.asesor = '';
     }
-    ['or', 'patente', 'cliente', 'fechaTurno'].forEach(function (n) {
+    CAMPOS_LIBRES.forEach(function (n) {
       var campo = $app.querySelector('[name="' + n + '"]');
       if (campo) campo.value = e.datos[n] || '';
+    });
+
+    Array.prototype.forEach.call($app.querySelectorAll('.respuesta'), function (r) {
+      r.checked = e.marcados[r.getAttribute('data-item')] === r.value;
+    });
+    Array.prototype.forEach.call($app.querySelectorAll('.pregunta'), function (f) {
+      f.classList.toggle('pregunta--respondida', !!e.marcados[f.getAttribute('data-item')]);
     });
 
     Array.prototype.forEach.call($app.querySelectorAll('.casillero'), function (c) {
@@ -153,7 +161,8 @@
     var e = estado.porTipo[estado.tipo];
     var total = Logica.itemsDe(CATALOGO, estado.tipo).length;
     var marcados = Object.keys(e.marcados).filter(function (k) { return e.marcados[k]; }).length;
-    $progreso.textContent = Vista.textoProgreso(marcados, total);
+    var esCuestionario = Logica.itemsDe(CATALOGO, estado.tipo).some(function (i) { return i.opciones; });
+    $progreso.textContent = esCuestionario ? marcados + ' / ' + total + ' respondidas' : Vista.textoProgreso(marcados, total);
   }
 
   // ───────── Eventos ─────────
@@ -164,6 +173,15 @@
     if (el.classList.contains('casillero')) {
       e.marcados[el.getAttribute('data-item')] = el.checked;
       marcarCelda(el);
+      actualizarProgreso();
+      return;
+    }
+    if (el.classList.contains('respuesta')) {
+      e.marcados[el.getAttribute('data-item')] = el.value;
+      aviso('validacion', null);
+      var fs = el.closest('.pregunta');
+      fs.classList.add('pregunta--respondida');
+      fs.classList.remove('pregunta--error');
       actualizarProgreso();
       return;
     }
@@ -183,7 +201,7 @@
 
   $app.addEventListener('input', function (ev) {
     var el = ev.target;
-    if (el.tagName === 'INPUT' && el.type !== 'checkbox' && el.name) {
+    if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.type !== 'checkbox' && el.type !== 'radio' && el.name) {
       estado.porTipo[estado.tipo].datos[el.name] = el.value;
     }
   });
@@ -251,6 +269,11 @@
       campo.closest('.campo').classList.toggle('campo--error', malo);
       if (malo && !primero) primero = campo;
     });
+    Array.prototype.forEach.call($app.querySelectorAll('.pregunta'), function (f) {
+      var falta = !estado.porTipo[tipo].marcados[f.getAttribute('data-item')];
+      f.classList.toggle('pregunta--error', falta);
+      if (falta && !primero) primero = f.querySelector('.respuesta');
+    });
     if (primero) primero.focus();
   }
 
@@ -270,7 +293,7 @@
     var tipo = estado.tipo;
     var e = estado.porTipo[tipo];
     aviso('rechazo', null);
-    var errores = Logica.validarDatos(tipo, e.datos);
+    var errores = Logica.validarDatos(tipo, e.datos).concat(Logica.validarRespuestas(tipo, e.marcados, CATALOGO));
     if (errores.length) {
       aviso('validacion', htmlAviso('error', 'Faltan datos para guardar:<ul>' + errores.map(function (x) { return '<li>' + Vista.esc(x) + '</li>'; }).join('') + '</ul>'));
       marcarErrores(tipo, e.datos);
@@ -296,7 +319,7 @@
   document.getElementById('cargar-otro').addEventListener('click', function () {
     var e = estado.porTipo[estado.tipo];
     e.marcados = {};
-    ['or', 'patente', 'cliente', 'fechaTurno'].forEach(function (k) { delete e.datos[k]; });
+    CAMPOS_LIBRES.forEach(function (k) { delete e.datos[k]; });
     escribirLS('posventa_ultimo', { sucursal: e.datos.sucursal, asesor: e.datos.asesor });
     $confirmacion.hidden = true;
     dibujar();
