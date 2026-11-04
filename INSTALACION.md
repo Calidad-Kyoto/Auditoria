@@ -8,7 +8,7 @@ de GitHub **Calidad-Kyoto**.
 1. Entrá a Google Sheets y creá una hoja de cálculo nueva.
 2. Ponele de nombre **Posventa – Checks Kyoto**.
 3. No hace falta crear pestañas: el script las arma solo (`Config`, `Check In`, `Check Out`,
-   `Agendamiento` y `Resumen`).
+   `Agendamiento`, `General` y `Resumen`).
 
 ## 2. Pegar el Apps Script
 
