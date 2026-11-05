@@ -51,6 +51,7 @@ class HojaFalsa {
       setBackground() { return rango; },
       setFontColor() { return rango; },
       setNumberFormat() { return rango; },
+      insertCheckboxes() { return rango; },
     };
     return rango;
   }
@@ -69,6 +70,8 @@ class PlanillaFalsa {
 function cargarCodigo(opciones) {
   const planilla = new PlanillaFalsa();
   const disparadores = [];
+  const drive = { carpetas: [], archivos: [] };
+  const propiedades = {};
   const ctx = {
     console,
     Logger: { log() {} },
@@ -82,6 +85,8 @@ function cargarCodigo(opciones) {
     },
     Session: { getScriptTimeZone: () => 'America/Argentina/Buenos_Aires' },
     Utilities: {
+      base64Decode: (s) => Array.from(Buffer.from(s, 'base64')),
+      newBlob: (bytes, tipo, nombre) => ({ bytes, tipo, nombre }),
       formatDate(fecha, zona, formato) {
         const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
           timeZone: zona, year: 'numeric', month: '2-digit', day: '2-digit',
@@ -89,6 +94,32 @@ function cargarCodigo(opciones) {
         }).formatToParts(fecha).map((x) => [x.type, x.value]));
         return formato.replace('yyyy', p.year).replace('MM', p.month).replace('dd', p.day)
           .replace('HH', p.hour).replace('mm', p.minute).replace('ss', p.second);
+      },
+    },
+    PropertiesService: {
+      getScriptProperties: () => ({
+        getProperty: (k) => (k in propiedades ? propiedades[k] : null),
+        setProperty: (k, v) => { propiedades[k] = String(v); },
+      }),
+    },
+    DriveApp: {
+      createFolder(nombre) {
+        const id = 'carpeta-' + (drive.carpetas.length + 1);
+        const carpeta = {
+          nombre, getId: () => id,
+          createFile(blob) {
+            const n = drive.archivos.length + 1;
+            drive.archivos.push({ carpeta: nombre, nombre: blob.nombre, tipo: blob.tipo, bytes: blob.bytes.length });
+            return { getUrl: () => 'https://drive.google.com/file/d/archivo-' + n + '/view' };
+          },
+        };
+        drive.carpetas.push(carpeta);
+        return carpeta;
+      },
+      getFolderById(id) {
+        const c = drive.carpetas.find((x) => x.getId() === id);
+        if (!c) throw new Error('No se encontró la carpeta');
+        return c;
       },
     },
     ScriptApp: {
@@ -106,7 +137,7 @@ function cargarCodigo(opciones) {
   for (const f of fs.readdirSync(dir).filter((n) => n.endsWith('.gs')).sort()) {
     vm.runInContext(fs.readFileSync(path.join(dir, f), 'utf8'), ctx, { filename: f });
   }
-  return { ctx, planilla, disparadores };
+  return { ctx, planilla, disparadores, drive };
 }
 
 // Convierte la salida de doGet/doPost en objeto. Acepta JSON y JSONP.

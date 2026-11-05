@@ -1,13 +1,14 @@
 /**
  * Kyoto Posventa — Hojas.gs: constantes, hojas, Config y GET.
- * Backend de los checks (Check In, Check Out, Agendamiento, General).
+ * Backend de los checks (Check In, Check Out, Agendamiento, General, Auditoría de OR).
  * Script VINCULADO al Google Sheet (Extensiones → Apps Script). Se publica como aplicación web.
  *
- *   GET  ?accion=config[&callback=fn]  → sucursales y asesores activos de la hoja Config (JSON o JSONP)
+ *   GET  ?accion=config[&callback=fn]  → sucursales/asesores activos (Config) y listas desplegables (Listas)
  *   POST body JSON {accion:'guardar', ...} → agrega una fila en la hoja del check
  */
 
-var HOJAS = { checkin: 'Check In', checkout: 'Check Out', agendamiento: 'Agendamiento', general: 'General' };
+var HOJAS = { checkin: 'Check In', checkout: 'Check Out', agendamiento: 'Agendamiento', general: 'General', auditoria: 'Auditoría de OR' };
+var HOJA_LISTAS = 'Listas';
 var HOJA_CONFIG = 'Config';
 var HOJA_RESUMEN = 'Resumen';
 var COL_ID = 'ID envío';
@@ -16,23 +17,42 @@ var FIJAS = {
   checkin: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', '% Cumplimiento', 'Ítems OK', 'Ítems totales', COL_ID],
   checkout: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', '% Cumplimiento', 'Ítems OK', 'Ítems totales', COL_ID],
   agendamiento: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Cliente', 'Patente', 'Fecha del turno', '% Cumplimiento', 'Ítems OK', 'Ítems totales', COL_ID],
-  general: ['Fecha/Hora', 'Sucursal', 'Asesor', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID]
+  general: ['Fecha/Hora', 'Sucursal', 'Asesor', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID],
+  auditoria: ['Fecha/Hora', 'Sucursal', 'Nº OR', 'Fecha de cierre', 'APS', 'Mecánico', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Fotos', COL_ID]
 };
 
 // Encabezado de columna → campo de payload.datos
-var CAMPOS = { 'Sucursal': 'sucursal', 'Asesor': 'asesor', 'Nº OR': 'or', 'Patente': 'patente', 'Cliente': 'cliente', 'Fecha del turno': 'fechaTurno', 'Observaciones': 'observaciones' };
+var CAMPOS = { 'Sucursal': 'sucursal', 'Asesor': 'asesor', 'Nº OR': 'or', 'Patente': 'patente', 'Cliente': 'cliente', 'Fecha del turno': 'fechaTurno', 'Observaciones': 'observaciones',
+  'Fecha de cierre': 'fechaCierre', 'APS': 'aps', 'Mecánico': 'mecanico' };
 
 var REQUERIDOS = {
   checkin: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
   checkout: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
   agendamiento: ['sucursal', 'asesor', 'cliente', 'patente', 'fechaTurno'],
-  general: ['sucursal', 'asesor']
+  general: ['sucursal', 'asesor'],
+  auditoria: ['sucursal', 'or', 'fechaCierre', 'aps', 'mecanico']
 };
 
 // Respuestas posibles de un ítem. Los checks con casillero mandan ok:true/false (= SI/NO);
-// las preguntas de General mandan valor: 'SI' | 'NO' | 'NO CORRESPONDE'.
-var VALORES = ['SI', 'NO', 'NO CORRESPONDE'];
+// las preguntas mandan valor: 'SI' | 'NO' | 'NO CORRESPONDE' | '' (pregunta optativa sin responder);
+// las observaciones por sección mandan texto.
+var VALORES = ['SI', 'NO', 'NO CORRESPONDE', ''];
 var MAX_OBSERVACIONES = 2000;
+var MAX_FOTOS = 5;
+var CARPETA_FOTOS = 'Auditoría de OR – fotos';
+
+// Desplegables de Auditoría de OR (copiados del Google Form). Se editan en la hoja Listas:
+// destildar "Activo" saca la opción de la página sin borrar el historial.
+var LISTAS_INICIALES = {
+  'APS': ['79 - Romero Silva Matias', '84 - Lopez Guillermo', '319 - Roa Araujo Jesus Marco', '320 - Marinich Franco Rodrigo',
+    '768 - Ferreyra Santiago Geremias', '551 - Mathias Alegre', '922 - Demetruk Paulo', '926 - Barboza Maximiliano Roberto'],
+  'Mecánico': ['89 - Álvarez Exequiel Maximiliano', '90 - Wojtun Claudio Marcelo', '91 - Calabroni Antonio Jose',
+    '92 - Maidana Claudio Alberto', '93 - Ayala Gustavo Ivan', '94 - Britos Cristian', '95 - Gauna Manuel Esteban',
+    '96 - Jaspe Osvaldo', '212 - Sergio Encinas', '214 - Rodriguez Ramon Angel', '229 - Navarro Leonardo Luis',
+    '319 - Roa Araujo Jesus Marco', '320 - Marinich Franco Rodrigo', '439 - Gonzalez Hector Joaquin',
+    '677 - Vallejo Jose Manuel', '876 - Aguirre Elias Sebastian']
+};
+var CLAVE_LISTA = { 'APS': 'aps', 'Mecánico': 'mecanico' };
 
 var SUCURSALES_INICIALES = ['KYOTO RESISTENCIA', 'KYOTO CORRIENTES', 'KYOTO POSADAS', 'KYOTO SAENZ PEÑA'];
 
@@ -49,6 +69,16 @@ function configurarHojas() {
     config.setFrozenRows(1);
   }
   Object.keys(HOJAS).forEach(function (tipo) { hojaDeCheck_(tipo); });
+  if (!ss.getSheetByName(HOJA_LISTAS)) {
+    var listas = ss.insertSheet(HOJA_LISTAS);
+    listas.appendRow(['Lista', 'Opción', 'Activo']);
+    Object.keys(LISTAS_INICIALES).forEach(function (l) {
+      LISTAS_INICIALES[l].forEach(function (op) { listas.appendRow([l, op, true]); });
+    });
+    listas.getRange(2, 3, listas.getLastRow() - 1, 1).insertCheckboxes();
+    listas.getRange(1, 1, 1, 3).setFontWeight('bold');
+    listas.setFrozenRows(1);
+  }
   if (!ss.getSheetByName(HOJA_RESUMEN)) ss.insertSheet(HOJA_RESUMEN);
   return true;
 }
@@ -89,6 +119,22 @@ function leerConfig_() {
   return orden.map(function (s) { return { nombre: s, asesores: porSucursal[s] }; });
 }
 
+// Opciones activas de cada desplegable: { aps: [...], mecanico: [...] }
+function leerListas_() {
+  var hoja = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(HOJA_LISTAS);
+  var res = {};
+  Object.keys(CLAVE_LISTA).forEach(function (l) { res[CLAVE_LISTA[l]] = []; });
+  if (hoja && hoja.getLastRow() > 1) {
+    hoja.getRange(2, 1, hoja.getLastRow() - 1, 3).getValues().forEach(function (f) {
+      var clave = CLAVE_LISTA[String(f[0]).trim()];
+      var op = String(f[1]).trim();
+      var activo = f[2] === true || /^(SI|TRUE|VERDADERO)$/i.test(String(f[2]).trim());
+      if (clave && op && activo && res[clave].indexOf(op) < 0) res[clave].push(op);
+    });
+  }
+  return res;
+}
+
 // ───────────────────────── Web app ─────────────────────────
 
 function doGet(e) {
@@ -96,7 +142,7 @@ function doGet(e) {
   var res;
   if (p.accion === 'config') {
     configurarHojas();
-    res = { ok: true, sucursales: leerConfig_() };
+    res = { ok: true, sucursales: leerConfig_(), listas: leerListas_() };
   } else {
     res = { ok: false, error: 'accion desconocida' };
   }

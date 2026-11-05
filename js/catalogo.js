@@ -13,6 +13,15 @@
   function pregunta(id, texto) {
     return { id: id, lineas: [texto], etiqueta: texto, img: null, opciones: ['SI', 'NO', 'NO CORRESPONDE'] };
   }
+  // Pregunta SI/NO de Auditoría de OR. extra: obligatoria, ayuda, foto, si: { id, valor } (sólo se muestra
+  // si la pregunta `id` tiene la respuesta `valor`; si no se muestra se guarda como NO CORRESPONDE).
+  function sn(id, texto, extra) {
+    return Object.assign({ id: id, lineas: [texto], etiqueta: texto, img: null, opciones: ['SI', 'NO'], obligatoria: false }, extra || {});
+  }
+  // Observaciones libres de una sección (texto, no cuenta para el cumplimiento).
+  function obs(id, texto) {
+    return { id: id, lineas: [texto], etiqueta: texto, img: null, observacion: true };
+  }
   function proto(id, etiqueta, texto) {
     return { id: id, lineas: [], etiqueta: etiqueta, img: null, texto: texto };
   }
@@ -146,6 +155,95 @@
             pregunta('ge_recordatorio_turnos', 'Control de recordatorio de turnos'),
             pregunta('ge_uso_epp', 'Control de uso de EPP'),
             pregunta('ge_cobertores_capot', 'Control de uso de cobertores de capot de vehículos')
+          ]
+        }
+      ]
+    },
+
+    // Auditoría de OR: copia del Google Form "Auditoría de Órdenes" (sin la pregunta de correo).
+    auditoria: {
+      titulo: 'AUDITORÍA DE ÓRDENES',
+      hoja: 'Auditoría de OR',
+      intro: '¡Bienvenido! En el siguiente formulario deberá contestar cada pregunta referente a la orden que usted seleccione para auditar. Dejará indicado el número de orden y las imágenes necesarias de la misma a fin de corroborar lo anotado.',
+      fotos: { ayuda: 'Cargue imágenes de la orden que respalden lo auditado.', max: 5 },
+      secciones: [
+        {
+          id: 'au_a', tipo: 'preguntas', titulo: 'A. Apertura de órdenes', items: [
+            sn('au_a1', 'A1. En "Manifestación del cliente", ¿está redactada correctamente la voz del cliente?', {
+              obligatoria: true, foto: 'img/au_a1.jpg',
+              ayuda: 'Si pide un servicio de XX km, debe decir "SERVICE xx km $xx". Si remite otra incidencia, debe estar aclarado.' }),
+            sn('au_a2', 'A2. ¿Se encuentra la descripción del técnico de la tarea realizada?', { obligatoria: true, foto: 'img/au_a2.jpg' }),
+            sn('au_a3', 'A3. El APS ¿anotó sus observaciones en "Interpretación del Asesor"? Si no hay observaciones al respecto, debe figurar "sin observaciones".', { obligatoria: true }),
+            sn('au_a4', 'A4. ¿Se encuentra el diagnóstico del técnico respecto del vehículo?', { obligatoria: true }),
+            sn('au_a5', 'A5. La orden, ¿posee sello de calidad, firma de ingreso y egreso?', { obligatoria: true, foto: 'img/au_a5.jpg' }),
+            obs('au_a6', 'A6. Observaciones de Apertura')
+          ]
+        },
+        {
+          id: 'au_b', tipo: 'preguntas', titulo: 'B. Proforma',
+          descripcion: ['Tengan en cuenta que esta sección posee preguntas condicionales, es decir, dependen de repuestas anteriores. Si correspondía el uso de la proforma, ignorar las preguntas referentes a la situación en que no se la utilizó.'],
+          items: [
+            sn('au_b1', 'B1. La proforma ¿está impresa en el dorso de la orden?', {
+              obligatoria: true, ayuda: 'Si no está impresa, responder y saltar a la siguiente sección ignorando el resto de preguntas.' }),
+            sn('au_b2', 'B2. ¿Se utilizó la proforma? (Recuerde que se usa cuando el cliente pide adicionales, o el técnico recomienda reemplazos.', {
+              si: { id: 'au_b1', valor: 'SI' },
+              ayuda: 'Si la respuesta es "No", ir a la pregunta B3. Si la respuesta es "Si", ir a las preguntas B4 a B6.)' }),
+            sn('au_b3', 'B3. ¿Se encuentra la proforma tachada?', {
+              si: { id: 'au_b2', valor: 'NO' }, ayuda: 'Una vez respondido, continuar a la siguiente sección.' }),
+            sn('au_b4', 'B4. ¿Se encuentran los presupuestos asignados y la disponibilidad de stock marcada?', { si: { id: 'au_b2', valor: 'SI' } }),
+            sn('au_b5', 'B5. La autorización del cliente, ¿está correctamente señalizada por caso?', { si: { id: 'au_b2', valor: 'SI' } }),
+            sn('au_b6', 'B6. ¿Está firmada por el cliente?', { si: { id: 'au_b2', valor: 'SI' } }),
+            obs('au_b7', 'B7. Observaciones de Preforma')
+          ]
+        },
+        {
+          id: 'au_c', tipo: 'preguntas', titulo: 'C. Checks', items: [
+            sn('au_c1', 'C1. ¿Tiene CHECK IN completo, acorde al "Manual de Órdenes de Reparación", con firma del APS y del cliente?', { obligatoria: true }),
+            sn('au_c2', 'C2. ¿Tiene CHECK UP completo, acorde al "Manual de Órdenes de Reparación", con nombre o sello y firma del técnico?', { obligatoria: true }),
+            sn('au_c3', 'C3. ¿Tiene CHECK OUT completo, acorde al "Manual de Órdenes de Reparación", con firma del cliente y del APS?', { obligatoria: true }),
+            obs('au_c4', 'C4. Observaciones de Checks')
+          ]
+        },
+        {
+          id: 'au_d', tipo: 'preguntas', titulo: 'D. Prueba de manejo',
+          descripcion: [
+            'Las pruebas solo son necesarias en 2 situaciones:',
+            'Si el cliente remite un ruido, molestia al andar u otra indicación. En este caso se controlan las 3 pruebas.',
+            'Si el técnico considera necesario realizar una prueba. En este caso se controla la prueba de manejo 2.',
+            'De no realizarse, debe estar asentado que no fue requerida ni realizada junto con el nombre o sello y firma del ténico'
+          ],
+          items: [
+            sn('au_d1', 'D1. Se realizó la prueba de manejo?.', {
+              ayuda: 'Si la respuesta es "Si", responder D3 e ignorar el resto. Si la respuesta es "No", responder D2 e ignorar el resto.' }),
+            sn('au_d2', 'D2. ¿Figura por escrito que no se realizaron las pruebas, validado con nombre o sello y firma del técnico?.', {
+              si: { id: 'au_d1', valor: 'NO' }, ayuda: 'Una vez respondido, pasar a la siguiente sección.' }),
+            sn('au_d3', 'D3. ¿Están las casillas marcadas, más las observaciones correspondientes, validado con sello o nombre y firma del técnico?.', {
+              si: { id: 'au_d1', valor: 'SI' } }),
+            obs('au_d4', 'D4. Observaciones de prueba de manejo')
+          ]
+        },
+        {
+          id: 'au_e', tipo: 'preguntas', titulo: 'E. Control cruzado', items: [
+            sn('au_e1', 'E1. ¿Están las preguntas contestadas junto con nombre o sello y firma del técnico de control?', { obligatoria: true }),
+            obs('au_e2', 'E2. Observaciones de control cruzado')
+          ]
+        },
+        {
+          id: 'au_f', tipo: 'preguntas', titulo: 'F. Inspección final', items: [
+            sn('au_f1', 'F1. ¿El control final está completo con nombre o sello y firma del APS?', { obligatoria: true }),
+            obs('au_f2', 'F2. Observaciones de inspección final')
+          ]
+        },
+        {
+          id: 'au_g', tipo: 'preguntas', titulo: 'G. Herramientas APS',
+          descripcion: ['Control del uso de las herramientas de Check in y Check out que dispone el APS para seguir el proceso de recepción y entrega.'],
+          items: [
+            sn('au_g1', 'G1. ¿Se encuentra la herramienta abrochada a la orden?', {
+              obligatoria: true,
+              ayuda: 'Si la respuesta es "No", se interpreta que no fue utilizada, Ignorar las siguientes preguntas y terminar la auditoria.' }),
+            sn('au_g2', 'G2. La herramienta Check In, ¿posee todas las marcas de seguimiento?', { si: { id: 'au_g1', valor: 'SI' }, foto: 'img/au_g2.jpg' }),
+            sn('au_g3', 'G3. La herramienta Check Out, ¿posee todas las marcas de seguimiento?', { si: { id: 'au_g1', valor: 'SI' }, foto: 'img/au_g3.jpg' }),
+            obs('au_g4', 'G4. Observaciones de Herramientas APS')
           ]
         }
       ]

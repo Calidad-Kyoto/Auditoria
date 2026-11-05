@@ -16,7 +16,7 @@ function actualizarResumen() {
     if (hoja.getLastRow() < 2) return;
     var datos = hoja.getRange(1, 1, hoja.getLastRow(), hoja.getLastColumn()).getValues();
     var enc = datos[0].map(String);
-    var cF = enc.indexOf('Fecha/Hora'), cS = enc.indexOf('Sucursal'), cA = enc.indexOf('Asesor'), cP = enc.indexOf('% Cumplimiento');
+    var cF = enc.indexOf('Fecha/Hora'), cS = enc.indexOf('Sucursal'), cA = enc.indexOf('Asesor') >= 0 ? enc.indexOf('Asesor') : enc.indexOf('APS'), cP = enc.indexOf('% Cumplimiento');
     var inicioItems = enc.indexOf(COL_ID) + 1;
     for (var r = 1; r < datos.length; r++) {
       var f = datos[r];
@@ -27,7 +27,7 @@ function actualizarResumen() {
       grupos[clave].n++;
       if (f[cP] !== '' && f[cP] !== null) { grupos[clave].conPct++; grupos[clave].suma += Number(f[cP]) || 0; } // vacío = todo NO CORRESPONDE
       for (var c = inicioItems; c < enc.length; c++) {
-        if (f[c] !== 'SI' && f[c] !== 'NO') continue;
+        if (f[c] !== 'SI' && f[c] !== 'NO') continue; // observaciones, NO CORRESPONDE y vacías no cuentan
         var k = HOJAS[tipo] + '|' + enc[c];
         if (!fallas[k]) fallas[k] = { check: HOJAS[tipo], item: enc[c], no: 0, total: 0 };
         fallas[k].total++;

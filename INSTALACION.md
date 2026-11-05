@@ -8,7 +8,7 @@ de GitHub **Calidad-Kyoto**.
 1. Entrá a Google Sheets y creá una hoja de cálculo nueva.
 2. Ponele de nombre **Posventa – Checks Kyoto**.
 3. No hace falta crear pestañas: el script las arma solo (`Config`, `Check In`, `Check Out`,
-   `Agendamiento`, `General` y `Resumen`).
+   `Agendamiento`, `General`, `Auditoría de OR`, `Listas` y `Resumen`).
 
 ## 2. Pegar el Apps Script
 
@@ -73,3 +73,15 @@ de GitHub **Calidad-Kyoto**.
 | "Sin asesores cargados en la hoja Config" | Paso 6: la sucursal no tiene asesores con `Activo` = SI |
 | "N checks pendientes de envío" que no baja | Conexión de la tablet; tocá Reintentar |
 | "El Sheet rechazó un check: Asesor no habilitado…" | El asesor fue dado de baja o cambió de nombre en `Config` |
+
+## 7. Desplegables de Auditoría de OR (APS y mecánicos)
+
+1. En el Sheet, pestaña **Listas**: una fila por opción, con `Lista` (`APS` o `Mecánico`), `Opción`
+   (por ejemplo `94 - Britos Cristian`) y la casilla `Activo`.
+2. **Para sacar a alguien del desplegable: destildá su casilla.** Al recargar la página ya no aparece.
+   No borres la fila: las auditorías viejas siguen mostrando su nombre.
+3. Para sumar a alguien: agregá una fila nueva y tildá la casilla (Insertar → Casilla de verificación
+   si la celda no la tiene).
+4. Las fotos de cada auditoría se guardan en la carpeta de Drive **Auditoría de OR – fotos** (se crea
+   sola con la primera foto) y el link queda en la columna `Fotos`. La primera vez Google pide
+   permiso para usar Drive: aceptalo con la cuenta de Calidad.

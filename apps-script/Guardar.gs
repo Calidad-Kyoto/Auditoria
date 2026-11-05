@@ -24,23 +24,61 @@ function validar_(p) {
     if (!d[k] || !String(d[k]).trim()) throw new Error('falta el dato: ' + k);
   });
   var suc = leerConfig_().filter(function (s) { return s.nombre === d.sucursal; })[0];
-  if (!suc || suc.asesores.indexOf(d.asesor) < 0) throw new Error('Asesor no habilitado para esa sucursal');
+  if (!suc) throw new Error('Sucursal desconocida');
+  if (REQUERIDOS[p.tipo].indexOf('asesor') >= 0 && suc.asesores.indexOf(d.asesor) < 0) throw new Error('Asesor no habilitado para esa sucursal');
   if (!Array.isArray(p.items) || !p.items.length) throw new Error('el check no tiene ítems');
   var vistas = {};
   p.items.forEach(function (it) {
     if (!it || typeof it.etiqueta !== 'string' || !it.etiqueta.trim()) throw new Error('ítem inválido');
-    if (it.valor !== undefined ? VALORES.indexOf(it.valor) < 0 : typeof it.ok !== 'boolean') throw new Error('respuesta inválida: ' + it.etiqueta);
+    if (it.texto !== undefined) {
+      if (typeof it.texto !== 'string' || it.texto.length > MAX_OBSERVACIONES) throw new Error('texto inválido: ' + it.etiqueta);
+    } else if (it.valor !== undefined ? VALORES.indexOf(it.valor) < 0 : typeof it.ok !== 'boolean') {
+      throw new Error('respuesta inválida: ' + it.etiqueta);
+    }
     if (vistas[it.etiqueta]) throw new Error('ítem repetido: ' + it.etiqueta);
     vistas[it.etiqueta] = true;
   });
   if (d.observaciones !== undefined && String(d.observaciones).length > MAX_OBSERVACIONES) {
     throw new Error('las observaciones superan los ' + MAX_OBSERVACIONES + ' caracteres');
   }
+  if (p.fotos !== undefined) {
+    if (!Array.isArray(p.fotos) || p.fotos.length > MAX_FOTOS) throw new Error('se pueden adjuntar hasta ' + MAX_FOTOS + ' fotos');
+    p.fotos.forEach(function (f) {
+      if (!f || !/^image\//.test(String(f.tipo)) || typeof f.datos !== 'string' || !f.datos || f.datos.length > 7000000) {
+        throw new Error('foto inválida');
+      }
+    });
+  }
 }
 
-// 'SI' | 'NO' | 'NO CORRESPONDE' de un ítem, venga como ok (casillero) o como valor (pregunta).
+// Guarda las fotos en una carpeta de Drive (la crea la primera vez) y devuelve sus links.
+function guardarFotos_(p) {
+  if (!p.fotos || !p.fotos.length) return '';
+  var props = PropertiesService.getScriptProperties();
+  var carpeta = null;
+  var id = props.getProperty('CARPETA_FOTOS_ID');
+  if (id) { try { carpeta = DriveApp.getFolderById(id); } catch (e) { carpeta = null; } }
+  if (!carpeta) {
+    carpeta = DriveApp.createFolder(CARPETA_FOTOS);
+    props.setProperty('CARPETA_FOTOS_ID', carpeta.getId());
+  }
+  var base = 'OR ' + String(p.datos.or || '').replace(/[^\w-]/g, '') + ' ' + String(p.creado || '').slice(0, 10);
+  return p.fotos.map(function (f, i) {
+    var ext = f.tipo === 'image/png' ? '.png' : '.jpg';
+    var blob = Utilities.newBlob(Utilities.base64Decode(f.datos), f.tipo, base + ' (' + (i + 1) + ')' + ext);
+    return carpeta.createFile(blob).getUrl();
+  }).join('\n');
+}
+
+// Lo que se escribe en la celda del ítem: texto (observación), valor (pregunta) o SI/NO (casillero).
 function valorDe_(it) {
+  if (it.texto !== undefined) return String(it.texto).trim();
   return it.valor !== undefined ? it.valor : (it.ok ? 'SI' : 'NO');
+}
+
+// Sólo las respuestas SI/NO cuentan para el cumplimiento (no las observaciones, ni NO CORRESPONDE, ni vacías).
+function puntuable_(it) {
+  return it.texto === undefined && (valorDe_(it) === 'SI' || valorDe_(it) === 'NO');
 }
 
 function guardarCheck_(p) {
@@ -68,8 +106,10 @@ function guardarCheck_(p) {
 
     // Los ítems "NO CORRESPONDE" no cuentan para el cumplimiento.
     var valores = p.items.map(valorDe_);
-    var okCount = valores.filter(function (v) { return v === 'SI'; }).length;
-    var aplicables = valores.filter(function (v) { return v !== 'NO CORRESPONDE'; }).length;
+    var puntuables = p.items.filter(puntuable_);
+    var okCount = puntuables.filter(function (it) { return valorDe_(it) === 'SI'; }).length;
+    var aplicables = puntuables.length;
+    var fotos = guardarFotos_(p);
     var fecha = new Date(p.creado);
     if (isNaN(fecha.getTime())) fecha = new Date();
     var fila = enc.map(function (h) {
@@ -78,6 +118,7 @@ function guardarCheck_(p) {
       if (h === 'Ítems OK') return okCount;
       if (h === 'Ítems totales') return aplicables;
       if (h === COL_ID) return p.idEnvio;
+      if (h === 'Fotos') return fotos;
       if (CAMPOS[h]) return String(p.datos[CAMPOS[h]] || '').trim();
       return '';
     });

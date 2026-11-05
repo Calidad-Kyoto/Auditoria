@@ -9,10 +9,12 @@
     checkin: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
     checkout: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
     agendamiento: ['sucursal', 'asesor', 'cliente', 'patente', 'fechaTurno'],
-    general: ['sucursal', 'asesor']
+    general: ['sucursal', 'asesor'],
+    auditoria: ['sucursal', 'or', 'fechaCierre', 'aps', 'mecanico']
   };
   var MAX_OBSERVACIONES = 2000;
-  var NOMBRES = { sucursal: 'Sucursal', asesor: 'Asesor', or: 'Nº de OR', patente: 'Patente', cliente: 'Cliente', fechaTurno: 'Fecha del turno' };
+  var NOMBRES = { sucursal: 'Sucursal', asesor: 'Asesor', or: 'Nº de OR', patente: 'Patente', cliente: 'Cliente', fechaTurno: 'Fecha del turno',
+    fechaCierre: 'Fecha de cierre de la orden', aps: 'Número de operario del APS', mecanico: 'Número de operario del mecánico' };
 
   function normalizarPatente(s) {
     return String(s || '').toUpperCase().replace(/[\s.\-]/g, '');
@@ -41,20 +43,45 @@
     return out;
   }
 
-  // Ítems con casillero traen ok:true/false; las preguntas traen valor 'SI' | 'NO' | 'NO CORRESPONDE'.
-  // Los "NO CORRESPONDE" no cuentan para el cumplimiento.
+  // Ítems con casillero traen ok:true/false; las preguntas traen valor 'SI' | 'NO' | 'NO CORRESPONDE' | ''
+  // y las observaciones traen texto. Sólo las respuestas SI/NO cuentan para el cumplimiento.
+  function puntuable(i) {
+    if (i.texto !== undefined) return false;
+    return i.valor === undefined || i.valor === 'SI' || i.valor === 'NO';
+  }
   function porcentaje(items) {
-    var aplicables = items.filter(function (i) { return i.valor !== 'NO CORRESPONDE'; });
+    var aplicables = items.filter(puntuable);
     if (!aplicables.length) return 0;
     var ok = aplicables.filter(function (i) { return i.valor !== undefined ? i.valor === 'SI' : i.ok; }).length;
     return Math.round(ok * 100 / aplicables.length);
   }
 
-  // Las preguntas (ítems con opciones) son obligatorias.
+  // Una pregunta condicional (`si: { id, valor }`) sólo se muestra si la otra tiene esa respuesta
+  // y, a su vez, está visible (B4 depende de B2, que depende de B1).
+  function visible(item, marcados, items) {
+    if (!item.si) return true;
+    if (marcados[item.si.id] !== item.si.valor) return false;
+    var padre = (items || []).filter(function (i) { return i.id === item.si.id; })[0];
+    return padre ? visible(padre, marcados, items) : true;
+  }
+
+  // Las preguntas visibles son obligatorias salvo que digan obligatoria: false.
   function validarRespuestas(tipo, marcados, catalogo) {
-    return itemsDe(catalogo, tipo).filter(function (i) {
-      return i.opciones && i.opciones.indexOf(marcados[i.id]) < 0;
+    var items = itemsDe(catalogo, tipo);
+    return items.filter(function (i) {
+      return i.opciones && i.obligatoria !== false && visible(i, marcados, items) && i.opciones.indexOf(marcados[i.id]) < 0;
     }).map(function (i) { return 'Falta responder: ' + i.etiqueta; });
+  }
+
+  // Avance para la barra de abajo: casilleros tildados, o preguntas visibles respondidas.
+  function progreso(tipo, marcados, catalogo) {
+    var items = itemsDe(catalogo, tipo);
+    var preguntas = items.filter(function (i) { return i.opciones; });
+    if (!preguntas.length) {
+      return { hechos: items.filter(function (i) { return marcados[i.id]; }).length, total: items.length, cuestionario: false };
+    }
+    var vis = preguntas.filter(function (i) { return visible(i, marcados, items); });
+    return { hechos: vis.filter(function (i) { return marcados[i.id]; }).length, total: vis.length, cuestionario: true };
   }
 
   function nuevoId() {
@@ -62,24 +89,30 @@
     return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
   }
 
-  // marcados: objeto { idItem: true }
-  function construirPayload(tipo, datos, marcados, catalogo, idEnvio, ahora) {
+  // marcados: { idItem: true } (casilleros), { idItem: 'SI' } (preguntas) o { idItem: 'texto' } (observaciones).
+  // fotos (optativo): [{ nombre, tipo, datos: base64 }]
+  function construirPayload(tipo, datos, marcados, catalogo, idEnvio, ahora, fotos) {
     var d = {};
     REQUERIDOS[tipo].forEach(function (k) { d[k] = String(datos[k] || '').trim(); });
     if (d.patente !== undefined) d.patente = normalizarPatente(d.patente);
     if (catalogo[tipo].observaciones) d.observaciones = String(datos.observaciones || '').trim().slice(0, MAX_OBSERVACIONES);
-    return {
+    var todos = itemsDe(catalogo, tipo);
+    var payload = {
       accion: 'guardar',
       tipo: tipo,
       idEnvio: idEnvio,
       creado: (ahora || new Date()).toISOString(),
       datos: d,
-      items: itemsDe(catalogo, tipo).map(function (i) {
-        return i.opciones
-          ? { id: i.id, etiqueta: i.etiqueta, valor: marcados[i.id] }
-          : { id: i.id, etiqueta: i.etiqueta, ok: !!marcados[i.id] };
+      items: todos.map(function (i) {
+        if (i.observacion) return { id: i.id, etiqueta: i.etiqueta, texto: String(marcados[i.id] || '').trim().slice(0, MAX_OBSERVACIONES) };
+        if (i.opciones) return { id: i.id, etiqueta: i.etiqueta, valor: visible(i, marcados, todos) ? (marcados[i.id] || '') : 'NO CORRESPONDE' };
+        return { id: i.id, etiqueta: i.etiqueta, ok: !!marcados[i.id] };
       })
     };
+    if (fotos && fotos.length) {
+      payload.fotos = fotos.map(function (f) { return { nombre: f.nombre, tipo: f.tipo, datos: f.datos }; });
+    }
+    return payload;
   }
 
   // Cola de envíos pendientes guardada en localStorage (o cualquier objeto con getItem/setItem).
@@ -126,6 +159,8 @@
     patenteValida: patenteValida,
     validarDatos: validarDatos,
     validarRespuestas: validarRespuestas,
+    visible: visible,
+    progreso: progreso,
     itemsDe: itemsDe,
     porcentaje: porcentaje,
     nuevoId: nuevoId,
