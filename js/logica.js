@@ -10,11 +10,12 @@
     checkout: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
     agendamiento: ['sucursal', 'asesor', 'cliente', 'patente', 'fechaTurno'],
     general: ['sucursal', 'asesor'],
-    auditoria: ['sucursal', 'or', 'fechaCierre', 'aps', 'mecanico']
+    auditoria: ['sucursal', 'or', 'fechaCierre', 'aps', 'mecanico', 'firmaCalidad']
   };
   var MAX_OBSERVACIONES = 2000;
   var NOMBRES = { sucursal: 'Sucursal', asesor: 'Asesor', or: 'Nº de OR', patente: 'Patente', cliente: 'Cliente', fechaTurno: 'Fecha del turno',
-    fechaCierre: 'Fecha de cierre de la orden', aps: 'Número de operario del APS', mecanico: 'Número de operario del mecánico' };
+    fechaCierre: 'Fecha de cierre de la orden', aps: 'Número de operario del APS', mecanico: 'Número de operario del mecánico',
+    firmaCalidad: 'Firma de control de calidad' };
 
   function normalizarPatente(s) {
     return String(s || '').toUpperCase().replace(/[\s.\-]/g, '');

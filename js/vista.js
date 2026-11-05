@@ -91,6 +91,7 @@
         campo('fechaCierre', 'Ingrese la fecha de cierre de la orden. *', '<input name="fechaCierre" type="date" required>') +
         campo('aps', 'Ingrese el número de operario del APS. *', '<select name="aps" required>' + opcionesLista(listas.aps, 'Elegir') + '</select>') +
         campo('mecanico', 'Ingrese el número de operario del mecánico. *', '<select name="mecanico" required>' + opcionesLista(listas.mecanico, 'Elegir') + '</select>') +
+        campo('firmaCalidad', 'Firma de control de calidad *', '<select name="firmaCalidad" required>' + opcionesLista(listas.mecanico, 'Elegir') + '</select>') +
         '</div>';
     }
     h += campo('asesor', tipo === 'agendamiento' ? 'Quién atendió' : 'Asesor', '<select name="asesor" required><option value="" disabled selected>Elegí primero la sucursal</option></select>');

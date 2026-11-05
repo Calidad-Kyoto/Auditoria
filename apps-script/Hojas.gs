@@ -18,19 +18,20 @@ var FIJAS = {
   checkout: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', '% Cumplimiento', 'Ítems OK', 'Ítems totales', COL_ID],
   agendamiento: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Cliente', 'Patente', 'Fecha del turno', '% Cumplimiento', 'Ítems OK', 'Ítems totales', COL_ID],
   general: ['Fecha/Hora', 'Sucursal', 'Asesor', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID],
-  auditoria: ['Fecha/Hora', 'Sucursal', 'Nº OR', 'Fecha de cierre', 'APS', 'Mecánico', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Fotos', COL_ID]
+  auditoria: ['Fecha/Hora', 'Sucursal', 'Nº OR', 'Fecha de cierre', 'APS', 'Mecánico', 'Firma de control de calidad', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Fotos', COL_ID]
 };
 
 // Encabezado de columna → campo de payload.datos
 var CAMPOS = { 'Sucursal': 'sucursal', 'Asesor': 'asesor', 'Nº OR': 'or', 'Patente': 'patente', 'Cliente': 'cliente', 'Fecha del turno': 'fechaTurno', 'Observaciones': 'observaciones',
-  'Fecha de cierre': 'fechaCierre', 'APS': 'aps', 'Mecánico': 'mecanico' };
+  'Fecha de cierre': 'fechaCierre', 'APS': 'aps', 'Mecánico': 'mecanico',
+  'Firma de control de calidad': 'firmaCalidad' };
 
 var REQUERIDOS = {
   checkin: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
   checkout: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
   agendamiento: ['sucursal', 'asesor', 'cliente', 'patente', 'fechaTurno'],
   general: ['sucursal', 'asesor'],
-  auditoria: ['sucursal', 'or', 'fechaCierre', 'aps', 'mecanico']
+  auditoria: ['sucursal', 'or', 'fechaCierre', 'aps', 'mecanico', 'firmaCalidad']
 };
 
 // Respuestas posibles de un ítem. Los checks con casillero mandan ok:true/false (= SI/NO);

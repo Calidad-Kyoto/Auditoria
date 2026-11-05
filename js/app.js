@@ -12,7 +12,7 @@
   var TIPOS = ['checkin', 'checkout', 'agendamiento', 'general', 'auditoria'];
   var TEXTO_BOTON = { checkin: 'GUARDAR CHECK IN', checkout: 'GUARDAR CHECK OUT', agendamiento: 'GUARDAR AGENDAMIENTO',
     general: 'GUARDAR GENERAL', auditoria: 'GUARDAR AUDITORÍA' };
-  var CAMPOS_LIBRES = ['or', 'patente', 'cliente', 'fechaTurno', 'observaciones', 'fechaCierre', 'aps', 'mecanico'];
+  var CAMPOS_LIBRES = ['or', 'patente', 'cliente', 'fechaTurno', 'observaciones', 'fechaCierre', 'aps', 'mecanico', 'firmaCalidad'];
   var LADO_FOTO = 1600; // px del lado mayor al comprimir las fotos
 
   var $app = document.getElementById('app');

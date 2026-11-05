@@ -126,6 +126,7 @@ main#app { padding: 16px 24px 0; }
   padding-bottom: 20px;
   border-bottom: 1px solid var(--gris-borde);
 }
+.datos { align-items: end; } /* los campos quedan alineados aunque un título ocupe dos líneas */
 .campo { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 700; letter-spacing: .03em; }
 .campo input, .campo select {
   height: 44px;

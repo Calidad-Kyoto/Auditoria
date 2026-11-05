@@ -98,7 +98,9 @@ function guardarCheck_(p) {
       }
     }
 
-    var nuevas = p.items.map(function (it) { return it.etiqueta; }).filter(function (et) { return enc.indexOf(et) < 0; });
+    // Columnas que faltan en una hoja ya creada: campos fijos agregados después (al final) e ítems nuevos.
+    var nuevas = FIJAS[p.tipo].concat(p.items.map(function (it) { return it.etiqueta; }))
+      .filter(function (et, i, todas) { return enc.indexOf(et) < 0 && todas.indexOf(et) === i; });
     if (nuevas.length) {
       hoja.getRange(1, enc.length + 1, 1, nuevas.length).setValues([nuevas]).setFontWeight('bold');
       enc = enc.concat(nuevas);
