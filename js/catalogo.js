@@ -30,6 +30,7 @@
     checkin: {
       titulo: 'CHECK IN',
       hoja: 'Check In',
+      observaciones: true,
       secciones: [
         {
           id: 'checkin', tipo: 'grilla', columnas: 4, items: [
@@ -71,6 +72,7 @@
     checkout: {
       titulo: 'CHECK OUT',
       hoja: 'Check Out',
+      observaciones: true,
       secciones: [
         {
           id: 'checkout', tipo: 'grilla', columnas: 4, items: [
@@ -107,6 +109,7 @@
     agendamiento: {
       titulo: 'AGENDAMIENTO',
       hoja: 'Agendamiento',
+      observaciones: true,
       secciones: [
         {
           id: 'protocolo-inicio', tipo: 'protocolo-inicio', items: [

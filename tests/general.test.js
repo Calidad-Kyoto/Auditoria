@@ -29,7 +29,7 @@ test('la vista dibuja 3 opciones por pregunta, observaciones y sólo sucursal/as
   const datos = V.htmlDatos('general', [{ nombre: 'KYOTO POSADAS', asesores: ['Ana'] }]);
   assert.ok(datos.includes('name="sucursal"') && datos.includes('name="asesor"'));
   for (const n of ['or', 'patente', 'cliente', 'fechaTurno']) assert.ok(!datos.includes(`name="${n}"`), n);
-  assert.ok(!V.htmlCheck('checkin', CATALOGO).includes('OBSERVACIONES'));
+  for (const t of ['checkin', 'checkout', 'agendamiento']) assert.ok(V.htmlCheck(t, CATALOGO).includes('name="observaciones"'), t);
 });
 
 test('validarRespuestas exige responder las 4 preguntas', () => {

@@ -26,3 +26,18 @@ for (const tipo of Object.keys(DATOS)) {
     assert.strictEqual(h.datos[1][h.datos[0].indexOf('% Cumplimiento')], 100);
   });
 }
+
+test('Check In guarda las observaciones; una hoja creada antes suma la columna al final', () => {
+  const { ctx, planilla } = cargarCodigo();
+  ctx.configurarHojas();
+  const h = planilla.getSheetByName('Check In');
+  h.datos[0] = h.datos[0].filter((c) => c !== 'Observaciones'); // como estaba la versión anterior
+  const datos = Object.assign({}, DATOS.checkin, { observaciones: '  Cliente apurado, no quiso lavado  ' });
+  const p = L.construirPayload('checkin', datos, {}, CATALOGO, L.nuevoId());
+  const r = leerSalida(ctx.doPost({ postData: { contents: JSON.stringify(p) } }));
+  assert.strictEqual(r.ok, true, r.error);
+  const enc = h.datos[0];
+  assert.strictEqual(enc.indexOf('Observaciones'), 10); // después de las 10 fijas viejas
+  assert.strictEqual(h.datos[1][enc.indexOf('Observaciones')], 'Cliente apurado, no quiso lavado');
+  assert.strictEqual(h.datos[1][enc.indexOf('Nº OR')], '777');
+});

@@ -14,9 +14,9 @@ var HOJA_RESUMEN = 'Resumen';
 var COL_ID = 'ID envío';
 
 var FIJAS = {
-  checkin: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', '% Cumplimiento', 'Ítems OK', 'Ítems totales', COL_ID],
-  checkout: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', '% Cumplimiento', 'Ítems OK', 'Ítems totales', COL_ID],
-  agendamiento: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Cliente', 'Patente', 'Fecha del turno', '% Cumplimiento', 'Ítems OK', 'Ítems totales', COL_ID],
+  checkin: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID],
+  checkout: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID],
+  agendamiento: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Cliente', 'Patente', 'Fecha del turno', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID],
   general: ['Fecha/Hora', 'Sucursal', 'Asesor', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID],
   auditoria: ['Fecha/Hora', 'Sucursal', 'Nº OR', 'Fecha de cierre', 'APS', 'Mecánico', 'Firma de control de calidad', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Fotos', COL_ID]
 };
