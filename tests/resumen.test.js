@@ -6,7 +6,7 @@ const { cargarCodigo } = require('./gas-sim.js');
 function guardar(ctx, id, creado, okLavado) {
   ctx.doPost({ postData: { contents: JSON.stringify({
     accion: 'guardar', tipo: 'checkout', idEnvio: id, creado,
-    datos: { sucursal: 'KYOTO RESISTENCIA', asesor: 'Asesor de prueba', or: '1', patente: 'AB123CD', cliente: 'X' },
+    datos: { sucursal: 'KYOTO RESISTENCIA', asesor: 'Asesor de prueba', or: '1', patente: 'AB123CD', cliente: 'X', trabajo: 'Diagnóstico' },
     items: [{ id: 'a', etiqueta: 'Lavado', ok: okLavado }, { id: 'b', etiqueta: 'Luces', ok: true }],
   }) } });
 }

@@ -17,8 +17,9 @@ test('patentes: normaliza y valida formatos vieja y Mercosur', () => {
 });
 
 test('validarDatos exige los campos de cada tipo', () => {
-  assert.deepStrictEqual(L.validarDatos('checkin', { sucursal: 'S', asesor: 'A', or: '1', patente: 'AB123CD', cliente: 'C' }), []);
-  assert.ok(L.validarDatos('checkin', { sucursal: 'S', asesor: 'A', patente: 'AB123CD', cliente: 'C' }).includes('Falta: Nº de OR'));
+  assert.deepStrictEqual(L.validarDatos('checkin', { sucursal: 'S', asesor: 'A', or: '1', patente: 'AB123CD', cliente: 'C', trabajo: 'Diagnóstico' }), []);
+  assert.ok(L.validarDatos('checkin', { sucursal: 'S', asesor: 'A', patente: 'AB123CD', cliente: 'C' }).includes('Falta: N° de Ref.'));
+  assert.ok(L.validarDatos('checkout', { sucursal: 'S', asesor: 'A', or: '1', patente: 'AB123CD', cliente: 'C' }).includes('Falta: Trabajo a realizar'));
   assert.ok(L.validarDatos('agendamiento', { sucursal: 'S', asesor: 'A', patente: 'AB123CD', cliente: 'C' }).includes('Falta: Fecha del turno'));
   assert.ok(L.validarDatos('checkout', { sucursal: 'S', asesor: 'A', or: '1', patente: 'XX', cliente: 'C' }).some((e) => e.startsWith('Patente inválida')));
 });

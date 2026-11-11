@@ -22,6 +22,10 @@
   function obs(id, texto) {
     return { id: id, lineas: [texto], etiqueta: texto, img: null, observacion: true };
   }
+  // Campo de texto de una línea que aparece sólo con cierta respuesta (y entonces es obligatorio).
+  function dato(id, etiqueta, rotulo, si) {
+    return { id: id, lineas: [rotulo], etiqueta: etiqueta, img: null, observacion: true, linea: true, obligatoria: true, si: si };
+  }
   function proto(id, etiqueta, texto) {
     return { id: id, lineas: [], etiqueta: etiqueta, img: null, texto: texto };
   }
@@ -155,7 +159,9 @@
         {
           id: 'general', tipo: 'preguntas', items: [
             pregunta('ge_no_show', 'Control No show'),
+            dato('ge_no_show_cliente', 'Control No show – Nombre del cliente', 'Nombre del cliente:', { id: 'ge_no_show', valor: 'NO' }),
             pregunta('ge_recordatorio_turnos', 'Control de recordatorio de turnos'),
+            dato('ge_recordatorio_cliente', 'Control de recordatorio de turnos – Nombre del cliente', 'Nombre del cliente:', { id: 'ge_recordatorio_turnos', valor: 'NO' }),
             pregunta('ge_uso_epp', 'Control de uso de EPP'),
             pregunta('ge_cobertores_capot', 'Control de uso de cobertores de capot de vehículos')
           ]

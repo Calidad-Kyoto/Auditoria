@@ -9,7 +9,7 @@ function post(ctx, cuerpo) {
 function base(extra) {
   return Object.assign({
     accion: 'guardar', tipo: 'checkin', idEnvio: 'envio-0001', creado: '2026-11-03T13:30:00.000Z',
-    datos: { sucursal: 'KYOTO CORRIENTES', asesor: 'Asesor de prueba', or: '4521', patente: 'AB123CD', cliente: 'Juan Pérez' },
+    datos: { sucursal: 'KYOTO CORRIENTES', asesor: 'Asesor de prueba', or: '4521', patente: 'AB123CD', cliente: 'Juan Pérez', trabajo: 'Servicio de 10.000 Km' },
     items: [{ id: 'a', etiqueta: 'Datos del cliente', ok: true }, { id: 'b', etiqueta: 'Lavado', ok: false },
       { id: 'c', etiqueta: 'Protecciones', ok: true }, { id: 'd', etiqueta: 'Venta Consultiva', ok: true }],
   }, extra);

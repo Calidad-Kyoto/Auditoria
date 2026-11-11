@@ -12,7 +12,7 @@
   var TIPOS = ['checkin', 'checkout', 'agendamiento', 'general', 'auditoria'];
   var TEXTO_BOTON = { checkin: 'GUARDAR CHECK IN', checkout: 'GUARDAR CHECK OUT', agendamiento: 'GUARDAR AGENDAMIENTO',
     general: 'GUARDAR GENERAL', auditoria: 'GUARDAR AUDITORÍA' };
-  var CAMPOS_LIBRES = ['or', 'patente', 'cliente', 'fechaTurno', 'observaciones', 'fechaCierre', 'aps', 'mecanico', 'firmaCalidad'];
+  var CAMPOS_LIBRES = ['or', 'patente', 'cliente', 'fechaTurno', 'observaciones', 'fechaCierre', 'aps', 'mecanico', 'firmaCalidad', 'trabajo'];
   var LADO_FOTO = 1600; // px del lado mayor al comprimir las fotos
 
   var $app = document.getElementById('app');
@@ -179,10 +179,10 @@
   function aplicarCondiciones() {
     var marcados = estado.porTipo[estado.tipo].marcados;
     // en orden de aparición: la pregunta de la que depende ya quedó resuelta (si está oculta, arrastra a esta)
-    Array.prototype.forEach.call($app.querySelectorAll('.pregunta[data-si-id]'), function (f) {
+    Array.prototype.forEach.call($app.querySelectorAll('[data-si-id]'), function (f) {
       var padre = $app.querySelector('.pregunta[data-item="' + f.getAttribute('data-si-id') + '"]');
       f.hidden = (padre && padre.hidden) || marcados[f.getAttribute('data-si-id')] !== f.getAttribute('data-si-valor');
-      if (f.hidden) f.classList.remove('pregunta--error');
+      if (f.hidden) f.classList.remove('pregunta--error', 'observacion--error');
     });
   }
 
@@ -270,6 +270,7 @@
     var el = ev.target;
     if (el.classList.contains('respuesta-texto')) {
       estado.porTipo[estado.tipo].marcados[el.getAttribute('data-item')] = el.value;
+      el.closest('.observacion').classList.remove('observacion--error');
       return;
     }
     if ((el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') && el.type !== 'checkbox' && el.type !== 'radio' && el.type !== 'file' && el.name) {
@@ -351,6 +352,11 @@
       var falta = !f.hidden && !estado.porTipo[tipo].marcados[f.getAttribute('data-item')];
       f.classList.toggle('pregunta--error', falta);
       if (falta && !primero) primero = f.querySelector('.respuesta');
+    });
+    Array.prototype.forEach.call($app.querySelectorAll('.observacion[data-obligatoria]'), function (f) {
+      var falta = !f.hidden && !String(estado.porTipo[tipo].marcados[f.getAttribute('data-item')] || '').trim();
+      f.classList.toggle('observacion--error', falta);
+      if (falta && !primero) primero = f.querySelector('.respuesta-texto');
     });
     if (primero) primero.focus();
   }

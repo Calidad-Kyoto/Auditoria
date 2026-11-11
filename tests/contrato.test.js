@@ -7,8 +7,8 @@ const CATALOGO = require('../js/catalogo.js');
 const { cargarCodigo, leerSalida } = require('./gas-sim.js');
 
 const DATOS = {
-  checkin: { sucursal: 'KYOTO SAENZ PEÑA', asesor: 'Asesor de prueba', or: '777', patente: 'AC456BD', cliente: 'María' },
-  checkout: { sucursal: 'KYOTO SAENZ PEÑA', asesor: 'Asesor de prueba', or: '777', patente: 'AC456BD', cliente: 'María' },
+  checkin: { sucursal: 'KYOTO SAENZ PEÑA', asesor: 'Asesor de prueba', or: '777', patente: 'AC456BD', cliente: 'María', trabajo: 'Servicio de 150.000 Km' },
+  checkout: { sucursal: 'KYOTO SAENZ PEÑA', asesor: 'Asesor de prueba', or: '777', patente: 'AC456BD', cliente: 'María', trabajo: 'Servicio Exprés' },
   agendamiento: { sucursal: 'KYOTO SAENZ PEÑA', asesor: 'Asesor de prueba', cliente: 'María', patente: 'AC456BD', fechaTurno: '2026-11-12' },
 };
 
@@ -37,7 +37,7 @@ test('Check In guarda las observaciones; una hoja creada antes suma la columna a
   const r = leerSalida(ctx.doPost({ postData: { contents: JSON.stringify(p) } }));
   assert.strictEqual(r.ok, true, r.error);
   const enc = h.datos[0];
-  assert.strictEqual(enc.indexOf('Observaciones'), 10); // después de las 10 fijas viejas
+  assert.strictEqual(enc.indexOf('Observaciones'), 11); // después de las 11 fijas viejas (incluida Trabajo a realizar)
   assert.strictEqual(h.datos[1][enc.indexOf('Observaciones')], 'Cliente apurado, no quiso lavado');
   assert.strictEqual(h.datos[1][enc.indexOf('Nº OR')], '777');
 });

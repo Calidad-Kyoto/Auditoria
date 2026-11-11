@@ -543,6 +543,14 @@ main#app { padding: 16px 24px 0; }
   line-height: 28px;
 }
 
+/* Campo de una línea que aparece con la respuesta NO (ej. "Nombre del cliente:" en General) */
+.observacion[hidden] { display: none; }
+.observacion--linea { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 10px 4px 14px 24px; }
+.observacion--linea .observacion__titulo { margin: 0; font-size: 15px; }
+.observacion--linea .respuesta-texto { flex: 1; min-width: 200px; width: auto; height: 42px; }
+.observacion--error .observacion__titulo { color: var(--error); }
+.observacion--error .respuesta-texto { border-color: var(--error); }
+
 @media (prefers-reduced-motion: reduce) {
   .celda, .protocolo__item, .opcion span { transition: none; }
   .confirmacion { animation: none; }

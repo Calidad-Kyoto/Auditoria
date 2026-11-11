@@ -12,7 +12,7 @@ test('configurarHojas crea Config, las 4 hojas de checks y Resumen', () => {
   assert.deepStrictEqual(planilla.getSheetByName('Config').datos.slice(1).map((f) => f[0]),
     ['KYOTO RESISTENCIA', 'KYOTO CORRIENTES', 'KYOTO POSADAS', 'KYOTO SAENZ PEÑA']);
   assert.deepStrictEqual(planilla.getSheetByName('Check In').datos[0],
-    ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', 'ID envío']);
+    ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', 'Trabajo a realizar', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', 'ID envío']);
   assert.deepStrictEqual(planilla.getSheetByName('Agendamiento').datos[0],
     ['Fecha/Hora', 'Sucursal', 'Asesor', 'Cliente', 'Patente', 'Fecha del turno', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', 'ID envío']);
   assert.deepStrictEqual(planilla.getSheetByName('General').datos[0],

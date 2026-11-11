@@ -6,14 +6,14 @@
   else raiz.Logica = fabrica();
 })(this, function () {
   var REQUERIDOS = {
-    checkin: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
-    checkout: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
+    checkin: ['sucursal', 'asesor', 'or', 'patente', 'cliente', 'trabajo'],
+    checkout: ['sucursal', 'asesor', 'or', 'patente', 'cliente', 'trabajo'],
     agendamiento: ['sucursal', 'asesor', 'cliente', 'patente', 'fechaTurno'],
     general: ['sucursal', 'asesor'],
     auditoria: ['sucursal', 'or', 'fechaCierre', 'aps', 'mecanico', 'firmaCalidad']
   };
   var MAX_OBSERVACIONES = 2000;
-  var NOMBRES = { sucursal: 'Sucursal', asesor: 'Asesor', or: 'Nº de OR', patente: 'Patente', cliente: 'Cliente', fechaTurno: 'Fecha del turno',
+  var NOMBRES = { sucursal: 'Sucursal', asesor: 'Asesor', or: 'N° de Ref.', patente: 'Patente', cliente: 'Cliente', fechaTurno: 'Fecha del turno', trabajo: 'Trabajo a realizar',
     fechaCierre: 'Fecha de cierre de la orden', aps: 'Número de operario del APS', mecanico: 'Número de operario del mecánico',
     firmaCalidad: 'Firma de control de calidad' };
 
@@ -66,12 +66,15 @@
     return padre ? visible(padre, marcados, items) : true;
   }
 
-  // Las preguntas visibles son obligatorias salvo que digan obligatoria: false.
+  // Las preguntas visibles son obligatorias salvo que digan obligatoria: false; los campos de texto
+  // sólo si dicen obligatoria: true (ej. "Nombre del cliente" cuando se responde NO).
   function validarRespuestas(tipo, marcados, catalogo) {
     var items = itemsDe(catalogo, tipo);
     return items.filter(function (i) {
-      return i.opciones && i.obligatoria !== false && visible(i, marcados, items) && i.opciones.indexOf(marcados[i.id]) < 0;
-    }).map(function (i) { return 'Falta responder: ' + i.etiqueta; });
+      if (!visible(i, marcados, items)) return false;
+      if (i.observacion) return i.obligatoria === true && !String(marcados[i.id] || '').trim();
+      return i.opciones && i.obligatoria !== false && i.opciones.indexOf(marcados[i.id]) < 0;
+    }).map(function (i) { return i.observacion ? 'Falta completar: ' + i.etiqueta : 'Falta responder: ' + i.etiqueta; });
   }
 
   // Avance para la barra de abajo: casilleros tildados, o preguntas visibles respondidas.
@@ -105,7 +108,10 @@
       creado: (ahora || new Date()).toISOString(),
       datos: d,
       items: todos.map(function (i) {
-        if (i.observacion) return { id: i.id, etiqueta: i.etiqueta, texto: String(marcados[i.id] || '').trim().slice(0, MAX_OBSERVACIONES) };
+        if (i.observacion) {
+          var texto = visible(i, marcados, todos) ? String(marcados[i.id] || '').trim().slice(0, MAX_OBSERVACIONES) : '';
+          return { id: i.id, etiqueta: i.etiqueta, texto: texto };
+        }
         if (i.opciones) return { id: i.id, etiqueta: i.etiqueta, valor: visible(i, marcados, todos) ? (marcados[i.id] || '') : 'NO CORRESPONDE' };
         return { id: i.id, etiqueta: i.etiqueta, ok: !!marcados[i.id] };
       })

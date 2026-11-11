@@ -14,8 +14,8 @@ var HOJA_RESUMEN = 'Resumen';
 var COL_ID = 'ID envío';
 
 var FIJAS = {
-  checkin: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID],
-  checkout: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID],
+  checkin: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', 'Trabajo a realizar', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID],
+  checkout: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Nº OR', 'Patente', 'Cliente', 'Trabajo a realizar', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID],
   agendamiento: ['Fecha/Hora', 'Sucursal', 'Asesor', 'Cliente', 'Patente', 'Fecha del turno', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID],
   general: ['Fecha/Hora', 'Sucursal', 'Asesor', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Observaciones', COL_ID],
   auditoria: ['Fecha/Hora', 'Sucursal', 'Nº OR', 'Fecha de cierre', 'APS', 'Mecánico', 'Firma de control de calidad', '% Cumplimiento', 'Ítems OK', 'Ítems totales', 'Fotos', COL_ID]
@@ -24,11 +24,11 @@ var FIJAS = {
 // Encabezado de columna → campo de payload.datos
 var CAMPOS = { 'Sucursal': 'sucursal', 'Asesor': 'asesor', 'Nº OR': 'or', 'Patente': 'patente', 'Cliente': 'cliente', 'Fecha del turno': 'fechaTurno', 'Observaciones': 'observaciones',
   'Fecha de cierre': 'fechaCierre', 'APS': 'aps', 'Mecánico': 'mecanico',
-  'Firma de control de calidad': 'firmaCalidad' };
+  'Firma de control de calidad': 'firmaCalidad', 'Trabajo a realizar': 'trabajo' };
 
 var REQUERIDOS = {
-  checkin: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
-  checkout: ['sucursal', 'asesor', 'or', 'patente', 'cliente'],
+  checkin: ['sucursal', 'asesor', 'or', 'patente', 'cliente', 'trabajo'],
+  checkout: ['sucursal', 'asesor', 'or', 'patente', 'cliente', 'trabajo'],
   agendamiento: ['sucursal', 'asesor', 'cliente', 'patente', 'fechaTurno'],
   general: ['sucursal', 'asesor'],
   auditoria: ['sucursal', 'or', 'fechaCierre', 'aps', 'mecanico', 'firmaCalidad']

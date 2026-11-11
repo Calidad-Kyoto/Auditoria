@@ -5,6 +5,11 @@
   if (typeof module === 'object' && module.exports) module.exports = fabrica();
   else raiz.Vista = fabrica();
 })(this, function () {
+  // Opciones del desplegable "Trabajo a realizar" (Check In y Check Out).
+  var TRABAJOS = [];
+  for (var km = 10; km <= 150; km += 10) TRABAJOS.push('Servicio de ' + km + '.000 Km');
+  TRABAJOS.push('Diagnóstico', 'Servicio Exprés');
+
   function esc(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
@@ -37,8 +42,13 @@
       }).join('') + '</div></fieldset>';
   }
   function observacion(it) {
-    return '<label class="observacion" data-item="' + esc(it.id) + '"><span class="observacion__titulo">' + esc(it.etiqueta) +
-      '</span><textarea class="respuesta-texto" name="' + esc(it.id) + '" data-item="' + esc(it.id) + '" rows="3" maxlength="2000"></textarea></label>';
+    var control = it.linea
+      ? '<input type="text" class="respuesta-texto" name="' + esc(it.id) + '" data-item="' + esc(it.id) + '" maxlength="200" autocomplete="off">'
+      : '<textarea class="respuesta-texto" name="' + esc(it.id) + '" data-item="' + esc(it.id) + '" rows="3" maxlength="2000"></textarea>';
+    return '<label class="observacion' + (it.linea ? ' observacion--linea' : '') + '" data-item="' + esc(it.id) + '"' +
+      (it.obligatoria === true ? ' data-obligatoria="1"' : '') +
+      (it.si ? ' data-si-id="' + esc(it.si.id) + '" data-si-valor="' + esc(it.si.valor) + '" hidden' : '') +
+      '><span class="observacion__titulo">' + it.lineas.map(esc).join('<br>') + '</span>' + control + '</label>';
   }
   function itemCuestionario(it) {
     return it.observacion ? observacion(it) : pregunta(it);
@@ -95,10 +105,13 @@
         '</div>';
     }
     h += campo('asesor', tipo === 'agendamiento' ? 'Quién atendió' : 'Asesor', '<select name="asesor" required><option value="" disabled selected>Elegí primero la sucursal</option></select>');
-    if (tipo === 'checkin' || tipo === 'checkout') h += campo('or', 'Nº de OR', '<input name="or" inputmode="numeric" autocomplete="off" required>');
+    if (tipo === 'checkin' || tipo === 'checkout') h += campo('or', 'N° de Ref.', '<input name="or" inputmode="numeric" autocomplete="off" required>');
     if (tipo !== 'general') {
       h += campo('patente', 'Patente', '<input name="patente" autocapitalize="characters" autocomplete="off" required>');
       h += campo('cliente', 'Cliente', '<input name="cliente" autocomplete="off" required>');
+    }
+    if (tipo === 'checkin' || tipo === 'checkout') {
+      h += campo('trabajo', 'Trabajo a realizar', '<select name="trabajo" required>' + opcionesLista(TRABAJOS, 'Elegir') + '</select>');
     }
     if (tipo === 'agendamiento') h += campo('fechaTurno', 'Fecha del turno', '<input name="fechaTurno" type="date" required>');
     return '<div class="datos" data-tipo="' + esc(tipo) + '">' + h + '</div>';
@@ -113,5 +126,5 @@
   function textoProgreso(marcados, total) {
     return marcados + ' / ' + total + ' · ' + (total ? Math.round(marcados * 100 / total) : 0) + ' %';
   }
-  return { esc: esc, htmlCheck: htmlCheck, htmlDatos: htmlDatos, opcionesAsesores: opcionesAsesores, textoProgreso: textoProgreso };
+  return { TRABAJOS: TRABAJOS, esc: esc, htmlCheck: htmlCheck, htmlDatos: htmlDatos, opcionesAsesores: opcionesAsesores, textoProgreso: textoProgreso };
 });
