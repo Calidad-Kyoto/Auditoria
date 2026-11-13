@@ -17,7 +17,7 @@ test('ENDPOINT es el marcador o una URL de Apps Script /exec', () => {
 
 test('todo archivo local que referencia index.html existe', () => {
   const html = leer('index.html');
-  const refs = [...html.matchAll(/(?:src|href)="([^"#:]+)"/g)].map((m) => m[1]);
+  const refs = [...html.matchAll(/(?:src|href)="([^"#:]+)"/g)].map((m) => m[1].split('?')[0]);
   assert.ok(refs.length >= 6);
   for (const r of refs) assert.ok(fs.existsSync(path.join(RAIZ, r)), `no existe ${r}`);
 });

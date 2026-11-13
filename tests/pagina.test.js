@@ -11,8 +11,10 @@ test('index.html carga los scripts en orden y tiene la estructura de solapas', (
   const html = leer('index.html');
   assert.match(html, /<html lang="es">/);
   assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1">/);
-  assert.match(html, /<link rel="stylesheet" href="css\/estilos\.css">/);
-  const scripts = [...html.matchAll(/<script src="js\/(\w+)\.js"><\/script>/g)].map((m) => m[1]);
+  assert.match(html, /<link rel="stylesheet" href="css\/estilos\.css\?v=\d{12}">/);
+  const scripts = [...html.matchAll(/<script src="js\/(\w+)\.js\?v=\d{12}"><\/script>/g)].map((m) => m[1]);
+  // todos los archivos con la misma versión (tools/versionar.js), para que el navegador no mezcle viejos y nuevos
+  assert.strictEqual(new Set([...html.matchAll(/\?v=(\d{12})"/g)].map((m) => m[1])).size, 1);
   assert.deepStrictEqual(scripts, ['catalogo', 'logica', 'vista', 'indicadores', 'config', 'app']);
   assert.match(html, /<nav class="solapas"[^>]*>[\s\S]*POSVENTA[\s\S]*<\/nav>/);
   for (const t of ['checkin', 'checkout', 'agendamiento', 'general', 'auditoria', 'indicadores']) {

@@ -9,7 +9,8 @@ description: Publicar cambios de Kyoto Posventa en GitHub Pages y en el Apps Scr
 - Hay cambios en `index.html`, `css/`, `js/`, `img/` (página) o en `apps-script/` (backend).
 
 ## Steps
-1. `npm test` en 0 fallas.
+1. `npm run versionar` (pone un `?v=` nuevo a los .css/.js de index.html: sin esto, por la caché de 10 min de
+   GitHub Pages, una tablet puede mezclar archivos viejos y nuevos) y después `npm test` en 0 fallas.
 2. Pedir confirmación al usuario antes de cualquier `git push`.
 3. Página: `git push` a `main`; GitHub Pages se actualiza en ~1 minuto.
 4. Apps Script (si cambió `apps-script/`): el usuario pega los `.gs` en el editor, guarda, y va a
