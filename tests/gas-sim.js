@@ -86,6 +86,7 @@ function cargarCodigo(opciones) {
     Session: { getScriptTimeZone: () => 'America/Argentina/Buenos_Aires' },
     Utilities: {
       base64Decode: (s) => Array.from(Buffer.from(s, 'base64')),
+      getUuid: () => require('node:crypto').randomUUID(),
       newBlob: (bytes, tipo, nombre) => ({ bytes, tipo, nombre }),
       formatDate(fecha, zona, formato) {
         const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {

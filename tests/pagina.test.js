@@ -13,9 +13,9 @@ test('index.html carga los scripts en orden y tiene la estructura de solapas', (
   assert.match(html, /<meta name="viewport" content="width=device-width, initial-scale=1">/);
   assert.match(html, /<link rel="stylesheet" href="css\/estilos\.css">/);
   const scripts = [...html.matchAll(/<script src="js\/(\w+)\.js"><\/script>/g)].map((m) => m[1]);
-  assert.deepStrictEqual(scripts, ['catalogo', 'logica', 'vista', 'config', 'app']);
+  assert.deepStrictEqual(scripts, ['catalogo', 'logica', 'vista', 'indicadores', 'config', 'app']);
   assert.match(html, /<nav class="solapas"[^>]*>[\s\S]*POSVENTA[\s\S]*<\/nav>/);
-  for (const t of ['checkin', 'checkout', 'agendamiento', 'general', 'auditoria']) {
+  for (const t of ['checkin', 'checkout', 'agendamiento', 'general', 'auditoria', 'indicadores']) {
     assert.match(html, new RegExp(`<button[^>]*class="subsolapa"[^>]*data-tipo="${t}"`), `falta la sub-solapa ${t}`);
   }
   assert.match(html, /<main id="app"/);

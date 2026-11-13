@@ -1,5 +1,5 @@
 /* app.js — único archivo que toca el DOM.
- * Usa window.CATALOGO, window.Logica, window.Vista y window.POSVENTA_CONFIG.
+ * Usa window.CATALOGO, window.Logica, window.Vista, window.Indicadores y window.POSVENTA_CONFIG.
  */
 (function () {
   'use strict';
@@ -7,20 +7,26 @@
   var CATALOGO = window.CATALOGO;
   var Logica = window.Logica;
   var Vista = window.Vista;
+  var Indicadores = window.Indicadores;
   var ENDPOINT = ((window.POSVENTA_CONFIG || {}).ENDPOINT || '').trim();
   var MARCADOR = 'PEGAR_AQUI_LA_URL_DEL_APPS_SCRIPT';
-  var TIPOS = ['checkin', 'checkout', 'agendamiento', 'general', 'auditoria'];
+  var TIPOS = ['checkin', 'checkout', 'agendamiento', 'general', 'auditoria', 'indicadores'];
   var TEXTO_BOTON = { checkin: 'GUARDAR CHECK IN', checkout: 'GUARDAR CHECK OUT', agendamiento: 'GUARDAR AGENDAMIENTO',
     general: 'GUARDAR GENERAL', auditoria: 'GUARDAR AUDITORÍA' };
   var CAMPOS_LIBRES = ['or', 'patente', 'cliente', 'fechaTurno', 'observaciones', 'fechaCierre', 'aps', 'mecanico', 'firmaCalidad', 'trabajo'];
   var LADO_FOTO = 1600; // px del lado mayor al comprimir las fotos
+  // Generador de PDF del informe de indicadores: se carga sólo al tocar "Descargar PDF".
+  var HTML2PDF = { src: 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.14.0/html2pdf.bundle.min.js',
+    integridad: 'sha512-+9GoO5OUX2MmPRHUH5dnOY+KGReMLcxywEvQxvAI0y5JxXh/lkz99dKj4xdYfODP3dMFsoZRz4CF/vHcaqa2Ag==' };
+  var CLAVE_IND = 'posventa_clave_ind';
 
   var $app = document.getElementById('app');
   var $avisos = document.getElementById('avisos');
   var $progreso = document.getElementById('progreso');
   var $guardar = document.getElementById('guardar');
 
-  var estado = { tipo: 'checkin', sucursales: null, listas: {}, porTipo: {} };
+  var estado = { tipo: 'checkin', sucursales: null, listas: {}, porTipo: {},
+    ind: { datos: null, firma: '', mes: '', sucursal: '', error: '' } };
   TIPOS.forEach(function (t) { estado.porTipo[t] = { datos: {}, marcados: {}, fotos: [] }; });
 
   // ───────── localStorage (siempre con try/catch) ─────────
@@ -35,7 +41,7 @@
   // ───────── Avisos ─────────
 
   var avisos = {};
-  var ORDEN_AVISOS = ['endpoint', 'config', 'validacion', 'rechazo', 'pendientes'];
+  var ORDEN_AVISOS = ['endpoint', 'config', 'validacion', 'rechazo', 'pendientes', 'ind'];
   function aviso(clave, html) {
     if (html) avisos[clave] = html; else delete avisos[clave];
     $avisos.innerHTML = ORDEN_AVISOS.filter(function (k) { return avisos[k]; }).map(function (k) { return avisos[k]; }).join('');
@@ -105,8 +111,19 @@
     if (ultimo && ultimo.sucursal) { datos.sucursal = ultimo.sucursal; datos.asesor = ultimo.asesor || ''; }
   }
 
+  function marcarSubsolapa(tipo) {
+    Array.prototype.forEach.call(document.querySelectorAll('.subsolapa'), function (b) {
+      var activa = b.getAttribute('data-tipo') === tipo;
+      b.classList.toggle('subsolapa--activa', activa);
+      if (activa) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
+  }
+
   function dibujar() {
     var tipo = estado.tipo;
+    marcarSubsolapa(tipo);
+    document.body.classList.toggle('modo-indicadores', tipo === 'indicadores');
+    if (tipo === 'indicadores') { dibujarIndicadores(); return; }
     var e = estado.porTipo[tipo];
     var cargando = estado.sucursales === null;
     var sucursales = estado.sucursales || [];
@@ -156,11 +173,6 @@
       marcarCelda(c);
     });
 
-    Array.prototype.forEach.call(document.querySelectorAll('.subsolapa'), function (b) {
-      var activa = b.getAttribute('data-tipo') === tipo;
-      b.classList.toggle('subsolapa--activa', activa);
-      if (activa) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
-    });
     $guardar.textContent = TEXTO_BOTON[tipo];
     actualizarProgreso();
   }
@@ -222,6 +234,11 @@
 
   $app.addEventListener('change', function (ev) {
     var el = ev.target;
+    if (estado.tipo === 'indicadores') {
+      if (el.id === 'ind-mes') { estado.ind.mes = el.value; estado.ind.datos = null; estado.ind.firma = ''; dibujarIndicadores(); cargarIndicadores(); }
+      if (el.id === 'ind-sucursal') { estado.ind.sucursal = el.value; dibujarIndicadores(); }
+      return;
+    }
     var e = estado.porTipo[estado.tipo];
     if (el.classList.contains('casillero')) {
       e.marcados[el.getAttribute('data-item')] = el.checked;
@@ -279,6 +296,8 @@
   });
 
   $app.addEventListener('click', function (ev) {
+    if (ev.target.id === 'ind-actualizar') { cargarIndicadores(); return; }
+    if (ev.target.id === 'ind-pdf') { descargarPdf(); return; }
     var i = ev.target.getAttribute && ev.target.getAttribute('data-quitar-foto');
     if (i === null || i === undefined) return;
     estado.porTipo[estado.tipo].fotos.splice(Number(i), 1);
@@ -293,12 +312,150 @@
     estado.tipo = tipoDesdeHash();
     aviso('validacion', null);
     dibujar();
+    if (estado.tipo === 'indicadores') cargarIndicadores();
+  });
+
+  // ───────── Indicadores ─────────
+
+  function leerClaveInd() { try { return localStorage.getItem(CLAVE_IND) || ''; } catch (e) { return ''; } }
+  function guardarClaveInd(v) { try { if (v) localStorage.setItem(CLAVE_IND, v); else localStorage.removeItem(CLAVE_IND); } catch (e) { /* sin almacenamiento */ } }
+  function mesActual() {
+    var d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() < 9 ? '0' : '') + (d.getMonth() + 1);
+  }
+
+  function dibujarIndicadores() {
+    var ind = estado.ind;
+    if (!ind.mes) ind.mes = mesActual();
+    var titulo = '<h2 class="pestana">INDICADORES</h2>';
+    if (sinEndpoint) {
+      $app.innerHTML = '<div class="hoja hoja--indicadores">' + titulo + '<p class="ind-nada">Falta configurar la URL del Apps Script.</p></div>';
+      return;
+    }
+    if (!leerClaveInd()) {
+      $app.innerHTML = '<div class="hoja hoja--indicadores">' + titulo +
+        '<form class="ind-clave" id="ind-clave"><p>Ingresá la clave de indicadores. Está en la pestaña <b>Ajustes</b> del Sheet; se pide una sola vez en este dispositivo.</p>' +
+        '<label class="campo"><span>Clave</span><input type="password" id="ind-clave-valor" autocomplete="off" required></label>' +
+        '<button type="submit" class="ind-boton ind-boton--rojo">Ver indicadores</button>' +
+        (ind.error ? '<p class="ind-error">' + Vista.esc(ind.error) + '</p>' : '') + '</form></div>';
+      var campo = document.getElementById('ind-clave-valor');
+      if (campo) campo.focus();
+      return;
+    }
+    var filtros = { mes: ind.mes, sucursal: ind.sucursal };
+    var extra = (estado.sucursales || []).map(function (s) { return s.nombre; });
+    $app.innerHTML = '<div class="hoja hoja--indicadores">' + titulo + Indicadores.htmlControles(ind.datos, filtros, extra) +
+      (ind.datos ? Indicadores.htmlContenido(ind.datos, filtros) : '<p class="ind-nada">Cargando indicadores…</p>') + '</div>';
+  }
+
+  var cargandoInd = false;
+  function cargarIndicadores() {
+    if (sinEndpoint || !leerClaveInd() || cargandoInd) return;
+    cargandoInd = true;
+    var ind = estado.ind;
+    enviar({ accion: 'indicadores', clave: leerClaveInd(), mes: ind.mes || mesActual() }).then(function (r) {
+      cargandoInd = false;
+      if (r && r.ok) {
+        aviso('ind', null);
+        ind.error = '';
+        var firma = JSON.stringify([r.mes, r.meses, r.checks]);
+        var cambio = firma !== ind.firma;
+        ind.datos = r;
+        ind.firma = firma;
+        ind.mes = r.mes;
+        if (estado.tipo !== 'indicadores') return;
+        if (cambio) dibujarIndicadores();
+        else {
+          var hora = $app.querySelector('.ind-actualizado');
+          if (hora) hora.textContent = 'Actualizado ' + new Date().toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' }) + ' · se actualiza solo cada minuto';
+        }
+        return;
+      }
+      var error = (r && r.error) || 'respuesta inválida';
+      if (error === 'clave incorrecta') {
+        guardarClaveInd('');
+        ind.datos = null;
+        ind.firma = '';
+        ind.error = 'Clave incorrecta. Revisala en la pestaña Ajustes del Sheet.';
+      } else if (error === 'accion desconocida') {
+        aviso('ind', htmlAviso('error', 'El Apps Script todavía no tiene la parte de indicadores: pegá Indicadores.gs y publicá una nueva versión.'));
+      } else {
+        aviso('ind', htmlAviso('error', 'No se pudieron leer los indicadores: ' + Vista.esc(error) + '.'));
+      }
+      if (estado.tipo === 'indicadores') dibujarIndicadores();
+    }, function () {
+      cargandoInd = false;
+      aviso('ind', htmlAviso('error', 'Sin conexión: no se pudieron actualizar los indicadores.', 'reintentar-ind', 'Reintentar'));
+    });
+  }
+
+  var cargaPdf = null;
+  function cargarGeneradorPdf() {
+    if (window.html2pdf) return Promise.resolve(window.html2pdf);
+    if (cargaPdf) return cargaPdf;
+    cargaPdf = new Promise(function (ok, mal) {
+      var s = document.createElement('script');
+      s.src = HTML2PDF.src;
+      s.integrity = HTML2PDF.integridad;
+      s.crossOrigin = 'anonymous';
+      s.referrerPolicy = 'no-referrer';
+      s.onload = function () { if (window.html2pdf) ok(window.html2pdf); else { cargaPdf = null; mal(new Error('sin generador')); } };
+      s.onerror = function () { cargaPdf = null; mal(new Error('sin generador')); };
+      document.head.appendChild(s);
+    });
+    return cargaPdf;
+  }
+
+  function descargarPdf() {
+    var ind = estado.ind;
+    if (!ind.datos) return;
+    var boton = document.getElementById('ind-pdf');
+    boton.disabled = true;
+    boton.textContent = 'Generando PDF…';
+    var filtros = { mes: ind.datos.mes, sucursal: ind.sucursal };
+    var caja = document.createElement('div');
+    caja.className = 'informe-caja';
+    caja.innerHTML = Indicadores.htmlInforme(ind.datos, filtros, new Date().toISOString());
+    document.body.appendChild(caja);
+    var logo = caja.querySelector('img');
+    var logoListo = logo.complete ? Promise.resolve() : new Promise(function (ok) { logo.onload = ok; logo.onerror = ok; });
+    var nombre = 'Indicadores Posventa Kyoto - ' + (ind.sucursal || 'Todas las sucursales') + ' - ' + Indicadores.nombreMes(ind.datos.mes) + '.pdf';
+    Promise.all([cargarGeneradorPdf(), logoListo]).then(function (r) {
+      return r[0]().set({
+        margin: [8, 8, 10, 8],
+        filename: nombre,
+        image: { type: 'jpeg', quality: 0.85 },
+        html2canvas: { scale: 1.6, backgroundColor: '#ffffff', useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' },
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.ind-tarjetas', '.ind-obs__item', '.ind-analisis__item', '.seccion__titulo', '.informe__cabecera'] }
+      }).from(caja.firstChild).save();
+    }).then(function () {
+      aviso('ind', null);
+    }, function () {
+      aviso('ind', htmlAviso('error', 'No se pudo generar el PDF (¿sin conexión?). Probá de nuevo con señal.'));
+    }).then(function () {
+      if (caja.parentNode) caja.parentNode.removeChild(caja);
+      var b = document.getElementById('ind-pdf');
+      if (b) { b.disabled = false; b.textContent = 'Descargar PDF'; }
+    });
+  }
+
+  $app.addEventListener('submit', function (ev) {
+    if (ev.target.id !== 'ind-clave') return;
+    ev.preventDefault();
+    var v = document.getElementById('ind-clave-valor').value.trim();
+    if (!v) return;
+    guardarClaveInd(v);
+    estado.ind.error = '';
+    dibujarIndicadores();
+    cargarIndicadores();
   });
 
   $avisos.addEventListener('click', function (ev) {
     var accion = ev.target.getAttribute && ev.target.getAttribute('data-accion');
     if (accion === 'reintentar-config') { aviso('config', null); estado.sucursales = null; dibujar(); cargarConfig(); }
     if (accion === 'reintentar-pendientes') enviarCola();
+    if (accion === 'reintentar-ind') { aviso('ind', null); cargarIndicadores(); }
   });
 
   // ───────── Guardar, cola sin conexión y confirmación ─────────
@@ -375,6 +532,7 @@
 
   $guardar.addEventListener('click', function () {
     var tipo = estado.tipo;
+    if (tipo === 'indicadores') return;
     var e = estado.porTipo[tipo];
     aviso('rechazo', null);
     var errores = Logica.validarDatos(tipo, e.datos).concat(Logica.validarRespuestas(tipo, e.marcados, CATALOGO));
@@ -432,11 +590,17 @@
   }
   window.addEventListener('online', enviarCola);
   setInterval(enviarCola, 60000);
+  // Indicadores en vivo: se vuelven a pedir cada minuto mientras la solapa está a la vista.
+  setInterval(function () { if (estado.tipo === 'indicadores' && !document.hidden) cargarIndicadores(); }, 60000);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && estado.tipo === 'indicadores') cargarIndicadores();
+  });
 
   // ───────── Inicio ─────────
 
   estado.tipo = tipoDesdeHash();
   dibujar();
+  if (estado.tipo === 'indicadores') cargarIndicadores();
   if (sinEndpoint) $guardar.disabled = true;
   cargarConfig();
   mostrarPendientes();

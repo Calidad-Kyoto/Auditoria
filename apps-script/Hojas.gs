@@ -80,6 +80,7 @@ function configurarHojas() {
     listas.getRange(1, 1, 1, 3).setFontWeight('bold');
     listas.setFrozenRows(1);
   }
+  crearAjustes_(ss); // Indicadores.gs: clave de la solapa INDICADORES
   if (!ss.getSheetByName(HOJA_RESUMEN)) ss.insertSheet(HOJA_RESUMEN);
   return true;
 }

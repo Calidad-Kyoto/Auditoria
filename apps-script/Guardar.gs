@@ -6,8 +6,9 @@ function doPost(e) {
   var res;
   try {
     var p = JSON.parse((e && e.postData && e.postData.contents) || '{}');
-    if (p.accion !== 'guardar') throw new Error('accion desconocida');
-    res = guardarCheck_(p);
+    if (p.accion === 'indicadores') res = indicadores_(p); // Indicadores.gs
+    else if (p.accion === 'guardar') res = guardarCheck_(p);
+    else throw new Error('accion desconocida');
   } catch (err) {
     res = { ok: false, error: String(err && err.message ? err.message : err) };
   }

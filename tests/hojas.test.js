@@ -7,7 +7,7 @@ test('configurarHojas crea Config, las 4 hojas de checks y Resumen', () => {
   const { ctx, planilla } = cargarCodigo();
   ctx.configurarHojas();
   const nombres = planilla.getSheets().map((h) => h.getName());
-  for (const n of ['Config', 'Check In', 'Check Out', 'Agendamiento', 'General', 'Auditoría de OR', 'Listas', 'Resumen']) assert.ok(nombres.includes(n), `falta ${n}`);
+  for (const n of ['Config', 'Check In', 'Check Out', 'Agendamiento', 'General', 'Auditoría de OR', 'Listas', 'Ajustes', 'Resumen']) assert.ok(nombres.includes(n), `falta ${n}`);
   assert.deepStrictEqual(planilla.getSheetByName('Config').datos[0], ['Sucursal', 'Asesor', 'Activo']);
   assert.deepStrictEqual(planilla.getSheetByName('Config').datos.slice(1).map((f) => f[0]),
     ['KYOTO RESISTENCIA', 'KYOTO CORRIENTES', 'KYOTO POSADAS', 'KYOTO SAENZ PEÑA']);
@@ -23,7 +23,7 @@ test('configurarHojas es idempotente: correrlo dos veces no duplica hojas ni fil
   const { ctx, planilla } = cargarCodigo();
   ctx.configurarHojas();
   ctx.configurarHojas();
-  assert.strictEqual(planilla.getSheets().length, 8);
+  assert.strictEqual(planilla.getSheets().length, 9);
   assert.strictEqual(planilla.getSheetByName('Config').getLastRow(), 5);
   assert.strictEqual(planilla.getSheetByName('Listas').getLastRow(), 25); // encabezado + 8 APS + 16 mecánicos
   assert.strictEqual(planilla.getSheetByName('Check Out').getLastRow(), 1);

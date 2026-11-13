@@ -7,6 +7,7 @@
   --rojo-pdf: #FD0100;
   --rojo-nissan: #C3002F;
   --gris-ok: #F2F2F2;
+  --gris-claro: #FAFAFA;
   --gris-texto: #5A5657;
   --gris-borde: #BDBABA;
   --verde: #1E7D32;
@@ -550,6 +551,154 @@ main#app { padding: 16px 24px 0; }
 .observacion--linea .respuesta-texto { flex: 1; min-width: 200px; width: auto; height: 42px; }
 .observacion--error .observacion__titulo { color: var(--error); }
 .observacion--error .respuesta-texto { border-color: var(--error); }
+
+/* ───────── Indicadores ───────── */
+
+body.modo-indicadores .barra-guardar { display: none; }
+body.modo-indicadores { padding-bottom: 24px; }
+.hoja--indicadores { max-width: 1240px; }
+
+.ind-clave { max-width: 420px; display: flex; flex-direction: column; gap: 14px; }
+.ind-clave p { margin: 0; line-height: 1.5; }
+.ind-error { color: var(--error); font-weight: 700; }
+.ind-nada { color: var(--gris-texto); font-style: italic; }
+
+.ind-controles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  margin: 8px 0 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--gris-borde);
+}
+.ind-controles .campo { min-width: 200px; }
+.ind-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.ind-boton {
+  height: 44px;
+  padding: 0 18px;
+  border: 2px solid var(--negro);
+  border-radius: 4px;
+  background: var(--blanco);
+  color: var(--negro);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: .03em;
+}
+.ind-boton:hover { background: var(--gris-ok); }
+.ind-boton--rojo { background: var(--rojo-nissan); border-color: var(--rojo-nissan); color: var(--blanco); }
+.ind-boton--rojo:hover { background: var(--rojo-nissan); filter: brightness(1.1); }
+.ind-actualizado { flex-basis: 100%; margin: 0; font-size: 13px; color: var(--gris-texto); }
+
+.ind-general { margin: 0 0 14px; font-size: 16px; font-weight: 700; line-height: 1.45; }
+
+.ind-tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.ind-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 2px solid var(--gris-borde);
+  border-left-width: 8px;
+  border-radius: 6px;
+  background: var(--blanco);
+}
+.ind-tarjeta--ok { border-left-color: var(--verde); }
+.ind-tarjeta--alerta { border-left-color: var(--info-borde); }
+.ind-tarjeta--mal { border-left-color: var(--rojo-nissan); }
+.ind-tarjeta__titulo { font-weight: 700; font-size: 14px; }
+.ind-tarjeta__pct { font-weight: 700; font-size: 30px; line-height: 1.1; }
+.ind-tarjeta__det { font-size: 13px; color: var(--gris-texto); }
+
+.ind-chip {
+  display: inline-block;
+  min-width: 52px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+  color: var(--blanco);
+  background: var(--gris-texto);
+}
+.ind-chip--ok { background: var(--verde); }
+.ind-chip--alerta { background: var(--info-borde); color: var(--negro); }
+.ind-chip--mal { background: var(--rojo-nissan); }
+.seccion__titulo .ind-chip { margin-left: 6px; vertical-align: 2px; }
+
+.ind-tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ind-tabla th, .ind-tabla td { padding: 7px 8px; border-bottom: 1px solid var(--gris-borde); text-align: left; vertical-align: middle; }
+.ind-tabla thead th { font-size: 12px; text-transform: uppercase; letter-spacing: .03em; color: var(--gris-texto); border-bottom: 2px solid var(--negro); }
+.ind-num { white-space: nowrap; text-align: right !important; }
+.ind-etiqueta { font-weight: 400; line-height: 1.35; }
+.ind-fila--mal .ind-etiqueta { font-weight: 700; }
+.ind-col-barra { width: 130px; }
+.ind-col-suc { text-align: right !important; }
+.ind-matriz { margin-bottom: 22px; }
+.ind-matriz td { white-space: nowrap; }
+.ind-matriz small { color: var(--gris-texto); }
+
+.ind-barra { display: flex; min-width: 80px; height: 12px; border-radius: 6px; overflow: hidden; background: var(--gris-ok); }
+.ind-barra__si { background: var(--verde); }
+.ind-barra__no { background: var(--rojo-nissan); }
+.ind-barra--vacia { background: repeating-linear-gradient(45deg, var(--gris-ok), var(--gris-ok) 4px, var(--blanco) 4px, var(--blanco) 8px); }
+.ind-var { font-weight: 700; }
+.ind-var--sube { color: var(--verde); }
+.ind-var--baja { color: var(--rojo-nissan); }
+
+.ind-check { margin-bottom: 26px; }
+.ind-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-items: start; }
+.ind-tabla-caja { overflow-x: auto; }
+.ind-obs { border: 1px solid var(--gris-borde); border-radius: 6px; padding: 10px 12px; max-height: 520px; overflow-y: auto; background: var(--gris-claro); }
+.ind-obs h4, .ind-analisis h4 { margin: 0 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: .04em; }
+.ind-obs ul { list-style: none; margin: 0; padding: 0; }
+.ind-obs__item { padding: 8px 0; border-bottom: 1px dashed var(--gris-borde); }
+.ind-obs__item:last-child { border-bottom: 0; }
+.ind-obs__meta { display: block; font-size: 12px; color: var(--gris-texto); }
+.ind-obs__campo { display: block; font-size: 12px; font-weight: 700; }
+.ind-obs__texto { display: block; font-size: 14px; font-weight: 400; line-height: 1.4; }
+
+.ind-analisis { margin-top: 14px; padding: 12px 14px; border-left: 4px solid var(--negro); background: var(--gris-claro); }
+.ind-analisis__resumen { margin: 0 0 8px; font-weight: 700; line-height: 1.45; }
+.ind-analisis ul { margin: 0; padding-left: 0; list-style: none; }
+.ind-analisis__item { position: relative; padding: 4px 0 4px 18px; font-size: 14px; line-height: 1.45; }
+.ind-analisis__item::before { content: ''; position: absolute; left: 2px; top: 10px; width: 9px; height: 9px; border-radius: 50%; background: var(--gris-texto); }
+.ind-analisis__item--ok::before { background: var(--verde); }
+.ind-analisis__item--alerta::before { background: var(--info-borde); }
+.ind-analisis__item--mal::before { background: var(--rojo-nissan); }
+
+/* Informe PDF: se arma fuera de pantalla y lo captura html2pdf (A4 apaisado) */
+.informe-caja { position: fixed; left: -12000px; top: 0; width: 1062px; background: var(--blanco); } /* = 281 mm, el ancho útil de A4 apaisado */
+.informe { width: 100%; box-sizing: border-box; padding: 0 2px; background: var(--blanco); color: var(--negro); }
+.informe__cabecera { display: flex; align-items: center; gap: 24px; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 4px solid var(--rojo-nissan); }
+.informe__logo { width: 230px; height: auto; }
+.informe__titulos h1 { margin: 0; font-size: 24px; font-weight: 700; }
+.informe__titulos p { margin: 4px 0 0; font-size: 14px; color: var(--gris-texto); }
+.informe .ind-obs { max-height: none; overflow: visible; }
+.informe .ind-tabla-caja { overflow: visible; }
+.informe .ind-check { page-break-inside: auto; }
+.informe__pie { margin-top: 18px; padding-top: 8px; border-top: 1px solid var(--gris-borde); font-size: 11px; color: var(--gris-texto); }
+
+@media (max-width: 1150px) {
+  .ind-cuerpo { grid-template-columns: 1fr; }
+  .ind-obs { max-height: none; }
+}
+/* el PDF siempre lleva las observaciones al lado de la tabla (A4 apaisado), aunque se genere desde una tablet */
+.informe .ind-cuerpo { grid-template-columns: minmax(0, 1fr) 260px; gap: 12px; }
+/* PDF compacto: menos renglones por indicador = menos páginas */
+.informe .ind-tabla { font-size: 12px; }
+.informe .ind-tabla th, .informe .ind-tabla td { padding: 4px 5px; }
+.informe .ind-tabla thead th { font-size: 10px; }
+.informe .ind-col-barra { width: 64px; }
+.informe .ind-barra { min-width: 56px; height: 9px; }
+.informe .ind-col-cuentas { display: none; }
+.informe .ind-chip { min-width: 38px; padding: 1px 4px; font-size: 11px; }
+.informe .ind-obs { padding: 8px 10px; }
+.informe .ind-obs__item { padding: 5px 0; }
+.informe .ind-obs__texto, .informe .ind-analisis__item { font-size: 12px; line-height: 1.35; }
+.informe .ind-analisis { margin-top: 10px; padding: 8px 12px; }
+.informe .ind-analisis__resumen { font-size: 13px; }
+.informe .seccion__titulo { margin-top: 18px; }
 
 @media (prefers-reduced-motion: reduce) {
   .celda, .protocolo__item, .opcion span { transition: none; }
