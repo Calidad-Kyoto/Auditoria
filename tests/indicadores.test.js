@@ -33,13 +33,18 @@ function cargarDatos() {
   return app;
 }
 
-test('Ajustes guarda una clave al azar y sin ella no hay indicadores', () => {
+test('sin clave en Ajustes los indicadores se ven libres; si se escribe una, se exige', () => {
   const { ctx, clave, planilla } = cargarDatos();
-  assert.deepStrictEqual(planilla.getSheetByName('Ajustes').datos[0], ['Ajuste', 'Valor']);
-  assert.strictEqual(planilla.getSheetByName('Ajustes').datos[1][0], 'Clave de indicadores');
-  assert.match(clave, /^[0-9A-F]{6}$/);
+  const ajustes = planilla.getSheetByName('Ajustes');
+  assert.deepStrictEqual(ajustes.datos[0], ['Ajuste', 'Valor', 'Nota']);
+  assert.strictEqual(ajustes.datos[1][0], 'Clave de indicadores');
+  assert.strictEqual(clave, '');
+  assert.strictEqual(post(ctx, { accion: 'indicadores', mes: '2026-11' }).ok, true);
+  assert.strictEqual(post(ctx, { accion: 'indicadores', clave: 'CUALQUIERA', mes: '2026-11' }).ok, true);
+  ajustes.datos[1][1] = 'KYOTO1'; // Calidad escribe una clave
+  assert.deepStrictEqual(post(ctx, { accion: 'indicadores', mes: '2026-11' }), { ok: false, error: 'clave incorrecta' });
   assert.deepStrictEqual(post(ctx, { accion: 'indicadores', clave: 'MALA', mes: '2026-11' }), { ok: false, error: 'clave incorrecta' });
-  assert.strictEqual(post(ctx, { accion: 'indicadores', mes: '2026-11' }).error, 'clave incorrecta');
+  assert.strictEqual(post(ctx, { accion: 'indicadores', clave: ' KYOTO1 ', mes: '2026-11' }).ok, true);
 });
 
 test('el Apps Script resume el mes por sucursal, con el mes anterior y las observaciones', () => {

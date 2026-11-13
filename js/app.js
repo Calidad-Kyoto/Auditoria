@@ -26,7 +26,7 @@
   var $guardar = document.getElementById('guardar');
 
   var estado = { tipo: 'checkin', sucursales: null, listas: {}, porTipo: {},
-    ind: { datos: null, firma: '', mes: '', sucursal: '', error: '' } };
+    ind: { datos: null, firma: '', mes: '', sucursal: '', error: '', pideClave: false } };
   TIPOS.forEach(function (t) { estado.porTipo[t] = { datos: {}, marcados: {}, fotos: [] }; });
 
   // ───────── localStorage (siempre con try/catch) ─────────
@@ -332,7 +332,8 @@
       $app.innerHTML = '<div class="hoja hoja--indicadores">' + titulo + '<p class="ind-nada">Falta configurar la URL del Apps Script.</p></div>';
       return;
     }
-    if (!leerClaveInd()) {
+    // La clave sólo se pide si el Apps Script la exige (celda "Clave de indicadores" de la hoja Ajustes con algo escrito).
+    if (ind.pideClave) {
       $app.innerHTML = '<div class="hoja hoja--indicadores">' + titulo +
         '<form class="ind-clave" id="ind-clave"><p>Ingresá la clave de indicadores. Está en la pestaña <b>Ajustes</b> del Sheet; se pide una sola vez en este dispositivo.</p>' +
         '<label class="campo"><span>Clave</span><input type="password" id="ind-clave-valor" autocomplete="off" required></label>' +
@@ -350,14 +351,15 @@
 
   var cargandoInd = false;
   function cargarIndicadores() {
-    if (sinEndpoint || !leerClaveInd() || cargandoInd) return;
-    cargandoInd = true;
     var ind = estado.ind;
+    if (sinEndpoint || cargandoInd || (ind.pideClave && !leerClaveInd())) return;
+    cargandoInd = true;
     enviar({ accion: 'indicadores', clave: leerClaveInd(), mes: ind.mes || mesActual() }).then(function (r) {
       cargandoInd = false;
       if (r && r.ok) {
         aviso('ind', null);
         ind.error = '';
+        ind.pideClave = false;
         var firma = JSON.stringify([r.mes, r.meses, r.checks]);
         var cambio = firma !== ind.firma;
         ind.datos = r;
@@ -373,10 +375,12 @@
       }
       var error = (r && r.error) || 'respuesta inválida';
       if (error === 'clave incorrecta') {
+        var habiaClave = !!leerClaveInd();
         guardarClaveInd('');
+        ind.pideClave = true;
         ind.datos = null;
         ind.firma = '';
-        ind.error = 'Clave incorrecta. Revisala en la pestaña Ajustes del Sheet.';
+        ind.error = habiaClave ? 'Clave incorrecta. Revisala en la pestaña Ajustes del Sheet.' : '';
       } else if (error === 'accion desconocida') {
         aviso('ind', htmlAviso('error', 'El Apps Script todavía no tiene la parte de indicadores: pegá Indicadores.gs y publicá una nueva versión.'));
       } else {
@@ -446,6 +450,7 @@
     var v = document.getElementById('ind-clave-valor').value.trim();
     if (!v) return;
     guardarClaveInd(v);
+    estado.ind.pideClave = false;
     estado.ind.error = '';
     dibujarIndicadores();
     cargarIndicadores();

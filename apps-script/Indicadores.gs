@@ -5,8 +5,8 @@
  *     { ok, mes, mesAnterior, meses, actualizado, checks: [{ tipo, hoja, sucursales: [{ nombre, n, nPct, pct, nAnt, pctAnt,
  *       items: [{ etiqueta, si, no, nc, siAnt, noAnt }], textos: [{ campo, texto, fecha, asesor, ref }] }] }] }
  *
- * La clave se lee de la hoja Ajustes ("Clave de indicadores"): el resumen trae observaciones y nombres de clientes,
- * y la aplicación web es pública.
+ * Clave optativa: si la celda "Clave de indicadores" de la hoja Ajustes está vacía, los indicadores se ven sin clave;
+ * si tiene algo, se pide (el resumen trae observaciones y nombres de clientes, y la aplicación web es pública).
  */
 
 var HOJA_AJUSTES = 'Ajustes';
@@ -16,9 +16,9 @@ var MAX_TEXTOS = 100;
 function crearAjustes_(ss) {
   if (ss.getSheetByName(HOJA_AJUSTES)) return;
   var hoja = ss.insertSheet(HOJA_AJUSTES);
-  hoja.appendRow(['Ajuste', 'Valor']);
-  hoja.appendRow([AJUSTE_CLAVE, Utilities.getUuid().replace(/-/g, '').slice(0, 6).toUpperCase()]);
-  hoja.getRange(1, 1, 1, 2).setFontWeight('bold');
+  hoja.appendRow(['Ajuste', 'Valor', 'Nota']);
+  hoja.appendRow([AJUSTE_CLAVE, '', 'Vacía = INDICADORES se ve sin clave. Si escribís una clave, la página la pide.']);
+  hoja.getRange(1, 1, 1, 3).setFontWeight('bold');
   hoja.setFrozenRows(1);
 }
 
@@ -43,7 +43,7 @@ function mesAnterior_(mes) {
 function indicadores_(p) {
   configurarHojas();
   var clave = claveIndicadores_();
-  if (!clave || String(p.clave || '').trim() !== clave) throw new Error('clave incorrecta');
+  if (clave && String(p.clave || '').trim() !== clave) throw new Error('clave incorrecta');
 
   var tz = Session.getScriptTimeZone();
   var mes = /^\d{4}-\d{2}$/.test(String(p.mes || '')) ? p.mes : Utilities.formatDate(new Date(), tz, 'yyyy-MM');
